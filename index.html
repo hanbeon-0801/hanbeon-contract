@@ -1,0 +1,1993 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>한번 계약서 생성기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<style>
+  :root{
+    --ink:#1a2238;
+    --ink-soft:#3a4256;
+    --line:#d9dbe2;
+    --line-soft:#ebecf0;
+    --paper:#fbfaf7;
+    --accent:#0f4c5c;
+    --accent-2:#2a6f7e;
+    --bg:#eceef3;
+    --panel:#ffffff;
+    --muted:#7b8194;
+    --gold:#b08d3e;
+    --shadow:0 10px 40px rgba(26,34,56,.12);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:'Noto Sans KR',sans-serif;
+    background:var(--bg);
+    color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* ---------- App layout ---------- */
+  .app{display:grid;grid-template-columns:minmax(330px,400px) 1fr;min-height:100vh}
+  .app > *{min-width:0}
+
+  /* ---------- Control panel ---------- */
+  .panel{
+    background:var(--panel);
+    border-right:1px solid var(--line);
+    height:100vh;overflow-y:auto;
+    position:sticky;top:0;
+  }
+  .panel::-webkit-scrollbar{width:8px}
+  .panel::-webkit-scrollbar-thumb{background:#cfd2da;border-radius:8px}
+
+  .brand{
+    padding:24px 26px 20px;
+    border-bottom:1px solid var(--line-soft);
+    position:sticky;top:0;background:var(--panel);z-index:5;
+  }
+  .brand .logo{
+    font-family:'Noto Serif KR',serif;font-weight:700;font-size:22px;
+    letter-spacing:-.5px;color:var(--accent);
+    display:flex;align-items:center;gap:10px;
+  }
+  .brand .logo .mark{
+    width:30px;height:30px;border-radius:8px;background:var(--accent);
+    color:#fff;display:grid;place-items:center;font-size:14px;
+  }
+  .brand .sub{font-size:12px;color:var(--muted);margin-top:6px;letter-spacing:.2px}
+
+  .group{padding:18px 26px;border-bottom:1px solid var(--line-soft)}
+  .group h3{
+    font-size:12px;font-weight:700;letter-spacing:.6px;color:var(--accent-2);
+    margin:0 0 14px;text-transform:uppercase;display:flex;align-items:center;gap:8px;
+  }
+  .group h3::before{content:"";width:5px;height:13px;background:var(--gold);border-radius:2px}
+
+  .field{margin-bottom:12px}
+  .field:last-child{margin-bottom:0}
+  .field label{display:block;font-size:12px;color:var(--ink-soft);margin-bottom:5px;font-weight:500}
+  .field input{
+    width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:8px;
+    font-family:inherit;font-size:13px;color:var(--ink);background:#fff;transition:.15s;
+  }
+  .field input:focus{outline:none;border-color:var(--accent-2);box-shadow:0 0 0 3px rgba(42,111,126,.12)}
+  .row2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
+  .row2 > .field{min-width:0}
+
+  /* 계약서 유형 탭 */
+  .ctype{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:12px}
+  .ctype .ct{padding:9px 6px;border:1px solid var(--line);border-radius:8px;background:#fff;
+    color:var(--muted);font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;transition:.15s}
+  .ctype .ct:hover{border-color:var(--accent-2);color:var(--accent-2)}
+  .ctype .ct.on{background:var(--accent);border-color:var(--accent);color:#fff}
+
+  /* 검색 자동완성 드롭다운 */
+  .dd{position:absolute;left:0;right:0;top:100%;z-index:30;background:#fff;border:1px solid var(--line);
+    border-radius:8px;margin-top:4px;box-shadow:0 8px 24px rgba(26,34,56,.15);overflow:hidden;display:none;max-height:280px;overflow-y:auto}
+  .dd.show{display:block}
+  .dd .it{padding:9px 12px;cursor:pointer;border-bottom:1px solid var(--line-soft)}
+  .dd .it:last-child{border-bottom:none}
+  .dd .it:hover,.dd .it.act{background:#f1f7f8}
+  .dd .it .nm{font-size:13px;font-weight:600;color:var(--ink)}
+  .dd .it .nm .tag{font-size:10px;color:var(--gold);font-weight:700;margin-left:6px}
+  .dd .it .ad{font-size:11px;color:var(--muted);margin-top:2px;line-height:1.4}
+  .dd .it .ph{font-size:11px;color:var(--accent-2);margin-top:1px}
+  .dd .hd{padding:6px 12px;font-size:10px;font-weight:700;color:var(--muted);background:#f7f8fa;letter-spacing:.5px}
+  .dd .empty{padding:11px 12px;font-size:12px;color:var(--muted)}
+
+  .amount-row{
+    display:grid;grid-template-columns:minmax(0,1fr) 118px;gap:10px;align-items:center;margin-bottom:10px;
+  }
+  .amount-row .nm{font-size:13px;color:var(--ink-soft)}
+  .amount-row input{text-align:right}
+  .won-wrap{position:relative;display:block;min-width:0}
+  .won-wrap input{padding-right:30px;width:100%;min-width:0}
+  .won-wrap::after{content:"원";position:absolute;right:11px;top:50%;transform:translateY(-50%);font-size:11px;color:var(--muted)}
+
+  .opt{
+    border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:10px;
+    background:#fcfcfd;transition:.15s;
+  }
+  .opt.on{border-color:var(--accent-2);background:#f4f9fa}
+  .opt .top{display:flex;align-items:center;gap:9px;margin-bottom:9px}
+  .opt .top input[type=checkbox]{width:17px;height:17px;accent-color:var(--accent);cursor:pointer}
+  .opt .top label{font-size:13px;font-weight:600;color:var(--ink);cursor:pointer;flex:1}
+  .opt .lbl-in{display:grid;grid-template-columns:minmax(0,1fr) 110px;gap:9px}
+  .opt .lbl-in input{padding:7px 9px;font-size:12px;border:1px solid var(--line);border-radius:7px;font-family:inherit;width:100%;min-width:0}
+  .opt .lbl-in input:focus{outline:none;border-color:var(--accent-2)}
+  .opt.off .lbl-in{opacity:.45;pointer-events:none}
+
+  .actions{padding:20px 26px;position:sticky;bottom:0;background:var(--panel);border-top:1px solid var(--line)}
+  .btn{
+    width:100%;padding:13px;border:none;border-radius:10px;font-family:inherit;
+    font-size:14px;font-weight:700;cursor:pointer;transition:.18s;letter-spacing:.3px;
+  }
+  .btn-primary{background:var(--accent);color:#fff;box-shadow:0 6px 18px rgba(15,76,92,.28)}
+  .btn-primary:hover{background:#0c3d49;transform:translateY(-1px)}
+  .btn-ghost{background:#fff;color:var(--ink-soft);border:1px solid var(--line);margin-top:9px}
+  .btn-ghost:hover{background:#f6f7f9}
+  .hint{font-size:11px;color:var(--muted);text-align:center;margin-top:11px;line-height:1.5}
+
+  /* ---------- Preview area ---------- */
+  .stage{padding:34px 40px;overflow-y:auto;height:100vh}
+  .stage-head{display:flex;align-items:center;justify-content:space-between;max-width:794px;margin:0 auto 18px;width:100%}
+  .stage-head .t{font-size:13px;color:var(--muted);font-weight:500}
+  .badge{font-size:11px;color:var(--accent-2);background:#e5f0f2;padding:5px 12px;border-radius:20px;font-weight:700}
+
+  /* ---------- A4 Document ---------- */
+  .doc{
+    width:100%;max-width:794px;margin:0 auto;background:var(--paper);box-shadow:var(--shadow);
+    padding:58px 60px 64px;color:var(--ink);
+    font-family:'Noto Serif KR',serif;font-size:13px;line-height:1.85;
+    border-top:5px solid var(--accent);
+  }
+  .doc .y{font-family:'Noto Sans KR';font-size:11px;color:var(--gold);letter-spacing:3px;font-weight:700;text-align:right}
+  .doc h1{
+    font-size:25px;font-weight:700;text-align:center;margin:8px 0 6px;letter-spacing:-.5px;
+  }
+  .doc .tagline{text-align:center;font-family:'Noto Sans KR';font-size:12px;color:var(--accent-2);
+    letter-spacing:1px;font-weight:500;margin-bottom:26px}
+  .doc .tagline::before,.doc .tagline::after{content:"—";margin:0 9px;color:var(--line)}
+
+  .parties{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:22px}
+  .party{border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  .party .ph{background:var(--accent);color:#fff;font-family:'Noto Sans KR';font-weight:700;
+    font-size:12px;padding:8px 14px;letter-spacing:1px}
+  .party .pb{padding:11px 14px;font-family:'Noto Sans KR';font-size:11.5px;line-height:1.7}
+  .party .pb .pr{display:flex;gap:8px;padding:2px 0}
+  .party .pb .pk{color:var(--muted);min-width:62px;flex-shrink:0}
+  .party .pb .pv{color:var(--ink);font-weight:500;word-break:keep-all;overflow-wrap:break-word}
+
+  .lead{font-family:'Noto Sans KR';font-size:12px;color:var(--ink-soft);text-align:center;
+    margin:0 0 24px;padding:0 10px}
+
+  .art{margin-bottom:18px}
+  .art h2{font-size:14px;font-weight:700;margin:0 0 7px;color:var(--accent);
+    border-bottom:1px solid var(--line-soft);padding-bottom:5px}
+  .art p{margin:4px 0;font-family:'Noto Sans KR';font-size:11.5px;color:var(--ink-soft);line-height:1.75}
+  .art .li{margin:3px 0;font-family:'Noto Sans KR';font-size:11.5px;color:var(--ink-soft);
+    padding-left:16px;text-indent:-16px;line-height:1.75}
+  .special-body{font-family:'Noto Sans KR';font-size:11.5px;color:var(--ink-soft);line-height:1.8;
+    white-space:pre-wrap;word-break:break-word;background:#faf6ec;border:1px solid var(--line);
+    border-radius:6px;padding:11px 13px;margin-top:4px}
+
+  /* 통합 패키지 구성 항목 리스트 (제2조 옵션 표) */
+  .pkg-title{font-weight:700;color:var(--ink);font-size:11.5px}
+  .pkg-title .pkg-badge{display:inline-block;font-size:9.5px;font-weight:700;color:var(--gold);
+    border:1px solid var(--gold);border-radius:10px;padding:1px 7px;margin-left:6px;vertical-align:1px;letter-spacing:.3px}
+  ul.pkg-items{margin:5px 0 2px;padding:0;list-style:none}
+  ul.pkg-items li{position:relative;padding-left:15px;margin:2px 0;font-size:11px;color:var(--ink-soft);line-height:1.6}
+  ul.pkg-items li::before{content:"✓";position:absolute;left:0;top:0;color:var(--accent-2);font-weight:700}
+  .pkg-note{font-size:10px;color:var(--muted);margin-top:3px}
+
+  /* PDF 캡처 중 A4 폭 고정 (좁은 창의 모바일 레이아웃에 영향받지 않도록) */
+  .doc.pdf-fixed{width:794px!important;max-width:794px!important;box-shadow:none!important;margin:0 auto!important;padding:58px 60px 64px!important}
+  .doc.pdf-fixed .parties,.doc.pdf-fixed .sign{grid-template-columns:1fr 1fr!important}
+
+  /* PDF 생성·인쇄 시 줄 단위 페이지 나눔 보호 */
+  .doc h2,.doc p,.doc li,.doc tr,.doc .party,.doc .sign{break-inside:avoid;page-break-inside:avoid}
+
+  table.tbl{width:100%;border-collapse:collapse;margin:9px 0;font-family:'Noto Sans KR';font-size:11px}
+  table.tbl th{background:#f0ebe0;color:var(--ink);font-weight:700;padding:7px 9px;
+    border:1px solid var(--line);text-align:left}
+  table.tbl td{padding:7px 9px;border:1px solid var(--line);color:var(--ink-soft);vertical-align:top}
+  table.tbl td.amt{text-align:right;font-weight:600;color:var(--ink);white-space:nowrap}
+  table.tbl tr.sum td{background:#faf6ec;font-weight:700;color:var(--ink)}
+  table.tbl tr.total td{background:var(--accent);color:#fff;font-weight:700;font-size:11.5px;line-height:1.7}
+  table.tbl tr.total td.amt{white-space:normal}
+  table.tbl tr.muted-row td{color:var(--muted)}
+
+  .sign{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:30px;padding-top:18px;
+    border-top:2px solid var(--accent)}
+  .sign .date{grid-column:1/-1;text-align:center;font-family:'Noto Sans KR';font-weight:700;
+    font-size:13px;margin-bottom:8px;color:var(--ink)}
+  .sign .sb{font-family:'Noto Sans KR';font-size:11.5px}
+  .sign .sb .sh{font-weight:700;color:var(--accent);margin-bottom:6px;font-size:12px}
+  .sign .sb .sr{display:flex;gap:8px;padding:2px 0;line-height:1.6}
+  .sign .sb .sr span:last-child{word-break:keep-all;overflow-wrap:break-word;min-width:0}
+  .sign .sb .sk{color:var(--muted);min-width:58px;flex-shrink:0}
+  .sign .sb .seal{margin-top:8px;color:var(--ink-soft);display:flex;align-items:center;gap:6px}
+  .sign .sb .seal .box{width:48px;height:48px;border:1px dashed var(--line);border-radius:50%;
+    display:inline-grid;place-items:center;font-size:9px;color:var(--muted)}
+
+  /* ---------- Print ---------- */
+  @media print{
+    @page{size:A4;margin:14mm 14mm}
+    body{background:#fff}
+    .panel,.stage-head{display:none!important}
+    .app{display:block}
+    .stage{padding:0;height:auto;overflow:visible}
+    .doc{width:auto;box-shadow:none;margin:0;padding:0;border-top:4px solid var(--accent)}
+    .party,table.tbl,.sign,.art{break-inside:avoid}
+  }
+
+  @media(max-width:920px){
+    .app{grid-template-columns:1fr}
+    .panel{position:static;height:auto}
+    .stage{height:auto}
+    .doc{width:100%;padding:32px 22px}
+    .parties,.sign{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ============ CONTROL PANEL ============ -->
+  <aside class="panel">
+    <div class="brand">
+      <div class="logo"><span class="mark">한</span>계약서 생성기</div>
+      <div class="sub" id="brand_sub">홈페이지 제작 · SEO·AEO·GEO 통합 계약서</div>
+      <div class="ctype">
+        <button type="button" id="tab_home" class="ct on" onclick="setMode('home')">🏠 홈페이지</button>
+        <button type="button" id="tab_blog" class="ct" onclick="setMode('blog')">✍ 블로그</button>
+        <button type="button" id="tab_place" class="ct" onclick="setMode('place')">📍 플레이스 보장형</button>
+        <button type="button" id="tab_clip" class="ct" onclick="setMode('clip')">🎬 네이버 클립</button>
+      </div>
+    </div>
+
+    <!-- 공급사 -->
+    <div class="group">
+      <h3 id="h_g">공급사 (갑)</h3>
+      <div class="row2">
+        <div class="field"><label>상호</label><input id="g_name" value="한번"></div>
+        <div class="field"><label>대표자</label><input id="g_ceo" value="김성민"></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>사업자번호</label><input id="g_biz" value="675-05-02786"></div>
+        <div class="field"><label>연락처</label><input id="g_tel" value="010-7474-8074"></div>
+      </div>
+      <div class="field"><label>주소</label><input id="g_addr" value="서울특별시 구로구 디지털로 34길 55 B201-E-15호"></div>
+    </div>
+
+    <!-- 의뢰인 -->
+    <div class="group">
+      <h3 id="h_b">의뢰인 (을)</h3>
+
+      <div class="field" style="position:relative">
+        <label>상호 <span style="color:var(--muted);font-size:11px">(입력하면 지도에서 자동 검색 →주소·전화 채움)</span></label>
+        <input id="b_name" value="로덴성문치과의원" placeholder="병원 상호 입력 (예: 계양가온365치과)" autocomplete="off">
+        <div id="clinic_dd" class="dd"></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>대표자 <span style="color:var(--muted);font-size:11px">(직접 입력)</span></label><input id="b_ceo" value="박소영"></div>
+        <div class="field"><label>대표연락처</label><input id="b_tel" value=""></div>
+      </div>
+      <div class="field"><label>주소</label><input id="b_addr" value="서울특별시 도봉구 쌍문동 657"></div>
+
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button class="btn btn-ghost" style="margin-top:0;flex:1;padding:9px;font-size:12px" onclick="saveClinic()">💾 이 병원 저장</button>
+        <button class="btn btn-ghost" style="margin-top:0;flex:1;padding:9px;font-size:12px" onclick="deleteClinic()">🗑 이 병원 삭제</button>
+      </div>
+      <p class="hint" style="margin-top:8px;text-align:left">검색은 주소·전화번호를 채워줍니다. <b>대표자(원장명)는 검색으로 알 수 없어</b> 직접 입력합니다. 저장해두면 다음부터 상호만 쳐도 대표자까지 자동 입력됩니다.</p>
+
+      <details style="margin-top:10px">
+        <summary style="font-size:11px;color:var(--accent-2);cursor:pointer;font-weight:600">⚙ 지도 검색 설정 (구글 키)</summary>
+        <div class="field" style="margin-top:8px">
+          <label>구글 Maps API 키</label>
+          <input id="gmaps_key" placeholder="발급받은 키 붙여넣기" autocomplete="off">
+        </div>
+        <button class="btn btn-ghost" style="margin-top:0;padding:8px;font-size:12px" onclick="saveGmapsKey()">키 저장 후 검색 활성화</button>
+        <p class="hint" id="gmaps_status" style="margin-top:7px;text-align:left">상태: 미설정</p>
+        <p class="hint" style="text-align:left;line-height:1.6">① console.cloud.google.com → 프로젝트 생성 → <b>결제(카드) 등록</b> → "Places API (New)" 사용 설정 → 사용자 인증 정보에서 <b>API 키</b> 생성 → 위에 붙여넣기.<br>② 본인 PC 파일로만 쓸 경우 키 제한을 걸지 않으면 됩니다. 웹에 올린다면 [API 키 → 애플리케이션 제한 → HTTP 리퍼러]에 그 주소를 등록하세요.<br>※ 무료 한도 안에서는 청구되지 않지만 카드 등록은 필수입니다.</p>
+      </details>
+    </div>
+
+    <!-- 기본 패키지 금액 (홈페이지 모드) -->
+    <div class="group mode-home">
+      <h3>기본 패키지 금액</h3>
+      <div class="amount-row"><span class="nm">홈페이지 제작</span><span class="won-wrap"><input class="amtnum" id="a_home" value="1000000"></span></div>
+      <div class="amount-row"><span class="nm">SEO 기본 셋팅</span><span class="won-wrap"><input class="amtnum" id="a_seo" value="500000"></span></div>
+      <div class="amount-row"><span class="nm">AEO / GEO 셋팅</span><span class="won-wrap"><input class="amtnum" id="a_geo" value="500000"></span></div>
+      <div class="amount-row"><span class="nm">웹포스팅 탑재</span><span class="won-wrap"><input class="amtnum" id="a_post" value="0"></span></div>
+    </div>
+
+    <!-- 선택 옵션 (홈페이지 모드) -->
+    <div class="group mode-home">
+      <h3>선택 옵션</h3>
+
+      <div class="opt on" id="opt7" style="border-width:2px;border-color:var(--gold);background:#fdfaf3">
+        <div class="top"><input type="checkbox" id="o7_chk" checked><label for="o7_chk">통합 관리 패키지 <span style="color:var(--gold);font-size:11px;font-weight:700">· 묶음 (월관리+포스팅+권위도)</span></label></div>
+        <div class="lbl-in">
+          <input id="o7_name" value="AI 검색 통합 관리 패키지">
+          <span class="won-wrap"><input class="amtnum" id="o7_amt" value="450000"></span>
+        </div>
+        <div class="field" style="margin-top:8px">
+          <label>구성 항목 <span style="color:var(--muted);font-size:11px">(한 줄에 하나씩 · 계약서에 ✓ 리스트로 표시)</span></label>
+          <textarea id="o7_items" rows="5" style="width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:12px;color:var(--ink);background:#fff;line-height:1.6;resize:vertical">AI 검색(SEO·AEO·GEO) 알고리즘 변화 모니터링 및 최적화 로직 업데이트
+검색 노출 현황 월 리포트
+치과 특화 콘텐츠 월 4~8편 포스팅
+외부 백링크 구축을 통한 도메인 권위도 향상
+호스팅·보안·플러그인 관리</textarea>
+        </div>
+        <div class="field" style="margin-top:8px"><label>단위 표기</label><input id="o7_unit" value="/ 월"></div>
+        <p class="hint" style="margin-top:7px;text-align:left">체크하면 아래 개별 3개(월관리비·포스팅·권위도)는 자동 해제됩니다.</p>
+      </div>
+
+      <div class="opt off" id="opt6">
+        <div class="top"><input type="checkbox" id="o6_chk"><label for="o6_chk">AI 검색 최적화 유지 (월관리비) <span style="color:var(--accent-2);font-size:11px">· 개별 선택</span></label></div>
+        <div class="lbl-in">
+          <input id="o6_name" value="AI 검색 최적화 유지(월관리비) — AI 검색(SEO·AEO·GEO) 알고리즘 변화 모니터링 및 최적화 로직 업데이트, 검색 노출 현황 리포트 (호스팅·보안·플러그인 관리 포함) ※ 매월 청구">
+          <span class="won-wrap"><input class="amtnum" id="o6_amt" value="100000"></span>
+        </div>
+        <div class="field" style="margin-top:8px"><label>단위 표기</label><input id="o6_unit" value="/ 월"></div>
+      </div>
+
+      <div class="opt off" id="opt3">
+        <div class="top"><input type="checkbox" id="o3_chk"><label for="o3_chk">월 포스팅 대행 <span style="color:var(--accent-2);font-size:11px">· 개별 선택</span></label></div>
+        <div class="lbl-in">
+          <input id="o3_name" value="월 포스팅 대행 — 치과 특화 콘텐츠 월 4~8편 작성">
+          <span class="won-wrap"><input class="amtnum" id="o3_amt" value="200000"></span>
+        </div>
+        <div class="field" style="margin-top:8px"><label>단위 표기</label><input id="o3_unit" value="/ 월"></div>
+      </div>
+
+      <div class="opt off" id="opt4">
+        <div class="top"><input type="checkbox" id="o4_chk"><label for="o4_chk">웹솔루션 권위도 향상 <span style="color:var(--accent-2);font-size:11px">· 개별 선택</span></label></div>
+        <div class="lbl-in">
+          <input id="o4_name" value="웹솔루션 권위도 향상 — 외부 백링크 구축을 통한 웹솔루션 도메인 권위도 향상">
+          <span class="won-wrap"><input class="amtnum" id="o4_amt" value="150000"></span>
+        </div>
+        <div class="field" style="margin-top:8px"><label>단위 표기</label><input id="o4_unit" value="/ 월"></div>
+      </div>
+
+      <div class="opt on" id="opt2">
+        <div class="top"><input type="checkbox" id="o2_chk" checked><label for="o2_chk">구글리뷰AI 자동 생성</label></div>
+        <div class="lbl-in">
+          <input id="o2_name" value="구글리뷰AI 자동 생성 — AI API 연동 맞춤형 리뷰 문구 자동 생성 및 등록 지원">
+          <span class="won-wrap"><input class="amtnum" id="o2_amt" value="0"></span>
+        </div>
+        <div class="field" style="margin-top:8px"><label>단위 표기</label><input id="o2_unit" value="/ 무상지원"></div>
+      </div>
+
+      <div class="opt on" id="opt1">
+        <div class="top"><input type="checkbox" id="o1_chk" checked><label for="o1_chk">SEO 웹 상위 노출</label></div>
+        <div class="lbl-in">
+          <input id="o1_name" value="SEO 웹 상위 노출 — 네이버 웹영역 지정 키워드 25일 상위노출 보장">
+          <span class="won-wrap"><input class="amtnum" id="o1_amt" value="0"></span>
+        </div>
+        <div class="field" style="margin-top:8px"><label>단위 표기</label><input id="o1_unit" value="/ 25일 보장"></div>
+      </div>
+
+      <div class="opt on" id="opt5">
+        <div class="top"><input type="checkbox" id="o5_chk" checked><label for="o5_chk">외국어 버전 제작 <span style="color:var(--gold);font-size:11px">· 1회성</span></label></div>
+        <div class="lbl-in">
+          <input id="o5_name" value="외국어 버전 제작 — 영문 등 외국어 페이지 추가 제작 및 다국어 SEO 메타 설정">
+          <span class="won-wrap"><input class="amtnum" id="o5_amt" value="0"></span>
+        </div>
+        <div class="field" style="margin-top:8px"><label>단위 표기</label><input id="o5_unit" value="/ 1회"></div>
+      </div>
+    </div>
+
+    <!-- 블로그 계약 조건 (블로그 모드) -->
+    <div class="group mode-blog" style="display:none">
+      <h3>블로그 계약 조건</h3>
+      <div class="field">
+        <label>제3조 본문 문구 <span style="color:var(--muted);font-size:11px">(필요 시 수정)</span></label>
+        <textarea id="bl_scope_intro" rows="3" style="width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:12px;color:var(--ink);background:#fff;line-height:1.6;resize:vertical">"을"이 수행할 "서비스"의 범위는 다음과 같으며, "을"은 동 "서비스"의 수행 시 "서비스"의 구체적인 방안에 관하여 사전에 "갑"의 승인을 받아야 한다.</textarea>
+      </div>
+      <div class="field">
+        <label>서비스 범위 항목 <span style="color:var(--muted);font-size:11px">(한 줄에 하나씩 · 자유롭게 수정/추가 → 계약서에 ✓ 리스트로 표시)</span></label>
+        <textarea id="bl_scope" rows="4" placeholder="예) 네이버 블로그 정보성 포스팅 (10 포스팅/월)&#10;상위노출 키워드 관리…" style="width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:12px;color:var(--ink);background:#fff;line-height:1.6;resize:vertical">네이버 블로그 정보성 포스팅 (10 포스팅/월)</textarea>
+      </div>
+      <div class="row2">
+        <div class="field"><label>계약 시작일</label><input id="bl_start" type="date"></div>
+        <div class="field"><label>계약 종료일 <span style="color:var(--muted);font-size:11px">(시작일 선택 시 자동 +1년)</span></label><input id="bl_end" type="date"></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>갱신거절 통지 (개월)</label><input id="bl_notice" value="1"></div>
+        <div class="field"><label>자동연장 단위 (개월)</label><input id="bl_renew" value="12"></div>
+      </div>
+      <div class="amount-row"><span class="nm">월 마케팅 대행비</span><span class="won-wrap"><input class="amtnum" id="bl_fee" value="600000"></span></div>
+      <p class="hint" style="text-align:left;margin-top:-4px">계약서에는 "일금 <b>육십만</b>원(600,000원, VAT 별도)" 형식으로 한글 금액이 자동 표기됩니다.</p>
+      <div class="field"><label>대행비 지급 기한 (일)</label><input id="bl_paydays" value="5"></div>
+    </div>
+
+    <!-- 플레이스 보장형 계약 조건 (플레이스 모드) -->
+    <div class="group mode-place" style="display:none">
+      <h3>플레이스 보장 조건</h3>
+      <div class="field"><label>목표 검색 키워드</label><input id="pl_kw" placeholder="예) 계양 치과" value=""></div>
+      <div class="row2">
+        <div class="field"><label>목표 노출 순위 (위 이내)</label><input id="pl_rank" value="5"></div>
+        <div class="field"><label>보장 노출 일수 (일)</label><input id="pl_days" value="25"></div>
+      </div>
+      <div class="amount-row"><span class="nm">계약 금액 (VAT 미포함)</span><span class="won-wrap"><input class="amtnum" id="pl_amt" value="1700000"></span></div>
+      <div class="row2">
+        <div class="field"><label>계약 시작일</label><input id="pl_start" type="date"></div>
+        <div class="field"><label>계약 종료일 <span style="color:var(--muted);font-size:11px">(시작일 선택 시 +1년)</span></label><input id="pl_end" type="date"></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>갱신거절 통지 (개월)</label><input id="pl_notice" value="1"></div>
+        <div class="field"><label>자동연장 단위</label><input id="pl_renew" value="1년"></div>
+      </div>
+      <div class="field"><label>대행비 지급 기한 (일)</label><input id="pl_paydays" value="5"></div>
+
+      <div class="opt" style="background:#fdfaf3;border-color:var(--gold)">
+        <div class="top" style="margin-bottom:6px"><label style="font-weight:700;font-size:13px">환불액 계산기 <span style="color:var(--muted);font-size:11px;font-weight:500">(참고용 · 계약서에는 계산식만 인쇄)</span></label></div>
+        <div class="row2">
+          <div class="field"><label>실제 노출 일수</label><input id="pl_calc_exposed" value="" placeholder="예) 18"></div>
+          <div class="field"><label>환불액 (자동 계산)</label><input id="pl_calc_refund" value="" readonly style="background:#f6f7f9;font-weight:700"></div>
+        </div>
+        <p class="hint" style="text-align:left;margin-top:4px">환불액 = (계약 금액 ÷ 보장 일수) × 미노출 일수 · 미노출 일수는 "을"의 보고 데이터 기준</p>
+      </div>
+
+      <p class="hint" style="text-align:left;margin-top:10px;background:#fff6e5;border:1px solid #e8c56a;border-radius:8px;padding:9px 11px;color:#7a5a12">⚠ <b>검토 필요</b>: 원본 계약서는 제5조①(계약 체결과 동시 지급)과 제6조③(보장일수 달성 시 청구)이 함께 있습니다. 원문 그대로 반영했으니 지급 시점 해석은 내부 확인 후 사용하세요.</p>
+    </div>
+
+    <!-- 네이버 클립 계약 조건 (클립 모드) -->
+    <div class="group mode-clip" style="display:none">
+      <h3>네이버 클립 상품 선택</h3>
+
+      <div class="opt on" id="clip_opt_a">
+        <div class="top"><input type="radio" name="clip_prod" id="cp_a" value="a" checked style="width:17px;height:17px;accent-color:var(--accent);cursor:pointer"><label for="cp_a" style="cursor:pointer;flex:1;font-weight:600;font-size:13px">단독형 · 월 10건 <span style="color:var(--accent-2);font-size:11px">(주 2~3회)</span></label></div>
+        <div class="amount-row" style="margin-bottom:0"><span class="nm">월 공급가액</span><span class="won-wrap"><input class="amtnum" id="clA_amt" value="450000"></span></div>
+      </div>
+
+      <div class="opt off" id="clip_opt_b">
+        <div class="top"><input type="radio" name="clip_prod" id="cp_b" value="b" style="width:17px;height:17px;accent-color:var(--accent);cursor:pointer"><label for="cp_b" style="cursor:pointer;flex:1;font-weight:600;font-size:13px">단독형 · 월 5건 <span style="color:var(--accent-2);font-size:11px">(주 1~2회 · 최소 3개월)</span></label></div>
+        <div class="amount-row" style="margin-bottom:0"><span class="nm">월 공급가액</span><span class="won-wrap"><input class="amtnum" id="clB_amt" value="300000"></span></div>
+      </div>
+
+      <div class="opt off" id="clip_opt_m">
+        <div class="top"><input type="radio" name="clip_prod" id="cp_m" value="m" style="width:17px;height:17px;accent-color:var(--accent);cursor:pointer"><label for="cp_m" style="cursor:pointer;flex:1;font-weight:600;font-size:13px">혼합형 · 블로그 월 10건 + 클립 월 10건</label></div>
+        <div class="amount-row"><span class="nm">브랜드 블로그 관리 (월)</span><span class="won-wrap"><input class="amtnum" id="clM_blog_amt" value="600000"></span></div>
+        <div class="amount-row" style="margin-bottom:0"><span class="nm">네이버 클립 관리 (월)</span><span class="won-wrap"><input class="amtnum" id="clM_clip_amt" value="300000"></span></div>
+        <p class="hint" style="text-align:left;margin-top:6px">합계는 자동 계산됩니다 (기본 900,000원/월 · VAT 별도). 블로그+인스타그램 동시 진행 시 클립 50% 할인 문구는 <b>자동 적용하지 않습니다</b> — 적용 여부는 별도 확인 후 금액을 직접 수정하세요.</p>
+      </div>
+
+      <div class="row2" style="margin-top:12px">
+        <div class="field"><label>계약 시작일</label><input id="cl_start" type="date"></div>
+        <div class="field"><label>계약 종료일 <span style="color:var(--muted);font-size:11px">(시작일 선택 시 +6개월)</span></label><input id="cl_end" type="date"></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>갱신거절 통지 (개월)</label><input id="cl_notice" value="1"></div>
+        <div class="field"><label>자동연장 단위 (개월)</label><input id="cl_renew" value="6"></div>
+      </div>
+    </div>
+
+    <!-- 계약일 -->
+    <div class="group">
+      <h3>계약 정보</h3>
+      <div class="field"><label>계약일</label><input id="c_date" type="date"></div>
+      <div class="field mode-home"><label>납품 기간 (개월)</label><input id="c_period" value="1~2개월"></div>
+      <div class="field">
+        <label>특약사항 <span style="color:var(--muted);font-size:11px">(없으면 비워두세요 · 줄바꿈 가능)</span></label>
+        <textarea id="c_special" rows="5" placeholder="예) 1. 본 계약과 별도로 …&#10;2. …" style="width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;color:var(--ink);background:#fff;line-height:1.6;resize:vertical"></textarea>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-primary" id="pdf_btn" onclick="genPDF()">📄 PDF 파일 다운로드</button>
+      <button class="btn btn-ghost" onclick="printContract()">🖨 브라우저로 인쇄</button>
+      <button class="btn btn-ghost" onclick="resetForm()">↺ 새 계약서 (초기화)</button>
+      <p class="hint">버튼을 누르면 <b>미리보기</b>가 뜨고, 확인 후 <b>PDF 파일로 저장</b>됩니다.<br>(파일명: 한번_유형_계약서_병원명.pdf)</p>
+    </div>
+  </aside>
+
+  <!-- ============ PREVIEW STAGE ============ -->
+  <main class="stage">
+    <div class="stage-head">
+      <span class="t">실시간 미리보기 · A4</span>
+      <span class="badge">한번 OFFICIAL</span>
+    </div>
+
+    <article class="doc" id="doc">
+      <div class="y">CONTRACT 2026</div>
+      <h1>홈페이지 제작 및 검색최적화 서비스 계약서</h1>
+      <div class="tagline">SEO · AEO · GEO 통합 최적화 솔루션</div>
+
+      <div class="parties">
+        <div class="party">
+          <div class="ph">갑 (공급사)</div>
+          <div class="pb">
+            <div class="pr"><span class="pk">상호</span><span class="pv" id="d_g_name"></span></div>
+            <div class="pr"><span class="pk">대표자</span><span class="pv" id="d_g_ceo"></span></div>
+            <div class="pr"><span class="pk">사업자번호</span><span class="pv" id="d_g_biz"></span></div>
+            <div class="pr"><span class="pk">연락처</span><span class="pv" id="d_g_tel"></span></div>
+            <div class="pr"><span class="pk">주소</span><span class="pv" id="d_g_addr"></span></div>
+          </div>
+        </div>
+        <div class="party">
+          <div class="ph">을 (의뢰인)</div>
+          <div class="pb">
+            <div class="pr"><span class="pk">상호</span><span class="pv" id="d_b_name"></span></div>
+            <div class="pr"><span class="pk">대표자</span><span class="pv" id="d_b_ceo"></span></div>
+            <div class="pr"><span class="pk">대표연락처</span><span class="pv" id="d_b_tel"></span></div>
+            <div class="pr"><span class="pk">주소</span><span class="pv" id="d_b_addr"></span></div>
+          </div>
+        </div>
+      </div>
+
+      <p class="lead">갑과 을은 홈페이지 제작 및 검색최적화(SEO·AEO·GEO) 서비스 제공에 관하여 다음과 같이 계약을 체결한다.</p>
+
+      <div class="art">
+        <h2>제1조 (계약의 목적)</h2>
+        <p>본 계약은 갑이 을의 치과의원을 위한 홈페이지 제작 및 SEO(검색엔진최적화)·AEO(답변엔진최적화)·GEO(생성형AI최적화) 서비스를 제공하고, 을이 이에 대한 대가를 지급하는 것을 목적으로 한다.</p>
+      </div>
+
+      <div class="art">
+        <h2>제2조 (용역의 범위)</h2>
+        <p>① 기본 패키지 — 아래 항목을 일괄 제공한다.</p>
+        <table class="tbl">
+          <thead><tr><th style="width:24%">항목</th><th>제공 내용</th><th style="width:16%;text-align:right">금액</th></tr></thead>
+          <tbody>
+            <tr><td>홈페이지 제작</td><td>반응형 디자인·개발, 치과 특화 UI, 원장·진료과목·FAQ 페이지</td><td class="amt" id="d_a_home"></td></tr>
+            <tr><td>SEO 기본 셋팅</td><td>title·meta·OG 태그, sitemap, robots.txt, LocalBusiness 구조화 데이터</td><td class="amt" id="d_a_seo"></td></tr>
+            <tr><td>AEO / GEO 셋팅</td><td>Organization·Person 스키마, 인용 친화 문장, 토픽 클러스터, 브랜드 표기 통일</td><td class="amt" id="d_a_geo"></td></tr>
+            <tr><td>웹포스팅 탑재</td><td>게시판 자동(API 연동) 또는 수동 포스팅 선택 가능, 최신성 신호 확보 포함</td><td class="amt" id="d_a_post"></td></tr>
+            <tr><td>신뢰 페이지 세트</td><td>회사소개·원장소개·개인정보처리방침·문의 페이지 포함</td><td class="amt">포함</td></tr>
+            <tr><td>Webmaster Tools 등록</td><td>AI 인용 추적 기반 셋팅, Search Console 연동 포함</td><td class="amt">포함</td></tr>
+            <tr class="sum"><td colspan="2">기본 패키지 초기 구축 합계 (1회성·부가세 별도)</td><td class="amt" id="d_pkg_sum"></td></tr>
+          </tbody>
+        </table>
+        <p>② 추가 옵션 — 을이 선택한 항목에 한하여 추가 계약한다.</p>
+        <table class="tbl"><tbody id="d_opt_body"></tbody></table>
+      </div>
+
+      <div class="art">
+        <h2>제3조 (계약금액 및 지급방법)</h2>
+        <p>① 본 계약의 총 계약금액은 아래와 같다.</p>
+        <table class="tbl">
+          <thead><tr><th style="width:34%">구분</th><th style="text-align:right;width:26%">금액 (부가세 별도)</th><th>비고</th></tr></thead>
+          <tbody>
+            <tr><td>기본 패키지 (초기 구축)</td><td class="amt" id="d_t_pkg"></td><td id="d_t_pkg_note">홈페이지 제작, SEO·AEO·GEO, 웹포스팅 탑재 — 계약 시 1회 납부</td></tr>
+            <tr id="d_t_opt_row"><td>선택 옵션 합계 (월 청구)</td><td class="amt" id="d_t_opt"></td><td>AI 검색 통합 관리 패키지 등 월 옵션 합계 · 선택에 따라 변동</td></tr>
+            <tr class="total"><td>총 계약금액</td><td class="amt" id="d_t_total"></td><td>부가세(10%) 별도</td></tr>
+          </tbody>
+        </table>
+        <p class="li">② 기본 패키지의 <b>초기 구축 비용</b>은 선납금 형태로 계약 체결 시 전액 납부함을 원칙으로 한다. 단, 갑·을 간 별도 합의 시 납부 일정을 조정할 수 있으며, 이 경우 별도 약정서를 작성한다.</p>
+        <p class="li">③ 부가가치세(10%)는 별도로 부과된다.</p>
+        <p class="li">④ <b>AI 검색 최적화 유지(월관리비) 및 월 단위 옵션</b>(포스팅 대행 등)은 초기 구축 비용과 별개로 <b>매월 청구되며</b>, 매월 서비스 시작 시 해당 월분을 선불로 납부한다.</p>
+      </div>
+
+      <div class="art">
+        <h2>제4조 (납품 기간 및 일정)</h2>
+        <p class="li">① 갑은 계약금 입금 확인 후 <b id="d_period"></b> 이내에 홈페이지를 납품한다.</p>
+        <p class="li">② 을의 콘텐츠(사진, 텍스트 등) 미제공 또는 피드백 지연 시 납품 기간은 그에 상응하여 연장될 수 있다.</p>
+        <p class="li">③ 납품 후 7일 이내 을의 검수 의견을 수렴하며, 의견이 없을 경우 검수 완료로 간주한다.</p>
+      </div>
+
+      <div class="art">
+        <h2>제5조 (무상 수정 및 하자 보수)</h2>
+        <p class="li">① 갑은 최종 납품일로부터 3개월 동안 기술적 하자에 대한 무상 수정을 제공한다.</p>
+        <p class="li">② 무상 수정 범위는 갑의 귀책에 의한 오류·버그로 한정하며, 을의 요청에 의한 디자인·내용 변경은 유상으로 처리한다.</p>
+        <p class="li">③ 무상 수정 기간 종료 후에는 별도 유지관리 계약에 따른다.</p>
+      </div>
+
+      <div class="art">
+        <h2>제6조 (지식재산권)</h2>
+        <p class="li">① 납품 완료 및 잔금 수령 후 홈페이지의 저작권은 을에게 이전된다.</p>
+        <p class="li">② 갑이 개발한 공통 모듈·프레임워크·라이브러리의 저작권은 갑에게 귀속되며, 을은 해당 홈페이지 내에서만 사용할 수 있다.</p>
+        <p class="li">③ 을이 제공한 사진·텍스트 등 콘텐츠의 저작권은 을에게 귀속된다.</p>
+      </div>
+
+      <div class="art">
+        <h2>제7조 (계약 해지 및 환불)</h2>
+        <p class="li">① 을이 계약 체결 후 작업 착수 전 해지 시 계약금의 50%를 위약금으로 공제 후 반환한다.</p>
+        <p class="li">② 작업 착수 후 을의 귀책으로 계약 해지 시 이미 진행된 작업 비용을 산정하여 정산하고, 계약금을 초과하는 경우 을이 추가 부담한다.</p>
+        <p class="li">③ 갑의 귀책으로 계약 이행이 불가한 경우 수령한 금액 전액을 을에게 반환한다.</p>
+      </div>
+
+      <div class="art">
+        <h2>제8조 (비밀유지)</h2>
+        <p>갑과 을은 본 계약과 관련하여 취득한 상대방의 경영 정보, 환자 데이터, 기술 자료 등 일체의 정보를 제3자에게 누설하지 않으며, 계약 종료 후에도 이 의무는 유효하다.</p>
+      </div>
+
+      <div class="art">
+        <h2>제9조 (분쟁 해결)</h2>
+        <p>본 계약과 관련한 분쟁은 당사자 간 협의를 우선으로 하며, 협의 불성립 시 갑의 소재지를 관할하는 법원을 합의 관할법원으로 한다.</p>
+      </div>
+
+      <div class="art">
+        <h2>제10조 (기타)</h2>
+        <p class="li">① 본 계약에 명시되지 않은 사항은 관련 법령 및 상관례에 따른다.</p>
+        <p class="li">② 본 계약은 2부를 작성하여 갑·을 각 1부씩 보관한다.</p>
+      </div>
+
+      <div class="art" id="special_block" style="display:none">
+        <h2>제11조 (특약사항)</h2>
+        <div id="d_special" class="special-body"></div>
+      </div>
+
+      <div class="sign">
+        <div class="date" id="d_date"></div>
+        <div class="sb">
+          <div class="sh">갑 (공급사)</div>
+          <div class="sr"><span class="sk">상호</span><span id="s_g_name"></span></div>
+          <div class="sr"><span class="sk">대표자</span><span id="s_g_ceo"></span></div>
+          <div class="sr"><span class="sk">사업자번호</span><span id="s_g_biz"></span></div>
+          <div class="sr"><span class="sk">주소</span><span id="s_g_addr"></span></div>
+          <div class="seal"><span>서명 또는 날인</span><span class="box">印</span></div>
+        </div>
+        <div class="sb">
+          <div class="sh">을 (의뢰인)</div>
+          <div class="sr"><span class="sk">상호</span><span id="s_b_name"></span></div>
+          <div class="sr"><span class="sk">대표자</span><span id="s_b_ceo"></span></div>
+          <div class="sr"><span class="sk">주소</span><span id="s_b_addr"></span></div>
+          <div class="seal"><span>서명 또는 날인</span><span class="box">印</span></div>
+        </div>
+      </div>
+    </article>
+
+    <!-- ============ 블로그 마케팅 대행 계약서 ============ -->
+    <article class="doc" id="doc_blog" style="display:none">
+      <div class="y">CONTRACT 2026</div>
+      <h1>온라인 마케팅 대행 계약서</h1>
+      <div class="tagline">네이버 블로그 마케팅 대행</div>
+
+      <div class="parties">
+        <div class="party">
+          <div class="ph">갑 (의뢰자)</div>
+          <div class="pb">
+            <div class="pr"><span class="pk">상호</span><span class="pv" id="bd_b_name"></span></div>
+            <div class="pr"><span class="pk">대표자</span><span class="pv" id="bd_b_ceo"></span></div>
+            <div class="pr"><span class="pk">대표연락처</span><span class="pv" id="bd_b_tel"></span></div>
+            <div class="pr"><span class="pk">주소</span><span class="pv" id="bd_b_addr"></span></div>
+          </div>
+        </div>
+        <div class="party">
+          <div class="ph">을 (대행사)</div>
+          <div class="pb">
+            <div class="pr"><span class="pk">상호</span><span class="pv" id="bd_g_name"></span></div>
+            <div class="pr"><span class="pk">대표자</span><span class="pv" id="bd_g_ceo"></span></div>
+            <div class="pr"><span class="pk">사업자번호</span><span class="pv" id="bd_g_biz"></span></div>
+            <div class="pr"><span class="pk">연락처</span><span class="pv" id="bd_g_tel"></span></div>
+            <div class="pr"><span class="pk">주소</span><span class="pv" id="bd_g_addr"></span></div>
+          </div>
+        </div>
+      </div>
+
+      <p class="lead">마케팅 대행 의뢰자 <b id="bd_lead_b"></b>(이하 "갑"이라 한다) 및 대행사 <b id="bd_lead_g"></b>(이하 "을"이라 한다)는 "갑"의 온라인 마케팅 대행(이하 "서비스"라 한다)을 위하여 포괄적인 상호 협력 관계를 맺기로 합의하여 다음과 같이 계약을 체결한다.</p>
+
+      <div class="art">
+        <h2>제1조 (계약의 목적)</h2>
+        <p>본 계약은 "갑"과 "을" 간의 업무 제휴를 체결함에 따른 권리와 의무 및 필요한 제반사항을 규정하는데 그 목적이 있다.</p>
+      </div>
+
+      <div class="art">
+        <h2>제2조 (서비스의 정의)</h2>
+        <p>"을"이 "갑"에게 제공하는 "서비스"는 계약서 제3조 범위 안에서 이루어진다.</p>
+      </div>
+
+      <div class="art">
+        <h2>제3조 (서비스의 범위)</h2>
+        <p id="bd_scope_intro" style="white-space:pre-wrap"></p>
+        <ul class="pkg-items" id="bd_scope" style="margin-top:6px"></ul>
+      </div>
+
+      <div class="art">
+        <h2>제4조 (계약 일반)</h2>
+        <p class="li">① 계약기간 — "서비스" 계약의 유효 기간은 <b id="bd_start"></b>부터 <b id="bd_end"></b>까지로 한다. 단, 계약기간 만료일 (<b id="bd_notice"></b>)개월 전까지 당사자 일방이 상대방에 대하여 서면으로 갱신거절의 의사를 통지하거나 계약내용의 변경을 요청하지 아니하면, 본 계약은 계약만료 익일부터 (<b id="bd_renew"></b>)개월씩 동일 조건으로 자동 연장된다.</p>
+      </div>
+
+      <div class="art">
+        <h2>제5조 (마케팅 대행비)</h2>
+        <p class="li">① "갑"은 본 계약 체결과 동시에 마케팅 대행비로 1개월 마케팅 대행비 일금 <b id="bd_fee_kr"></b>원(<span id="bd_fee_num"></span>)을 지급한다.</p>
+        <p class="li">② 기타 제비용은 "갑"과 "을"의 상호 협의 하에 정하기로 한다.</p>
+      </div>
+
+      <div class="art">
+        <h2>제6조 (마케팅 대행비의 청구 및 지급)</h2>
+        <p class="li">① "을"은 계약 완료 후 마케팅 대행에 따른 세금계산서를 발행하여 "갑"에게 청구한다.</p>
+        <p class="li">② "갑"은 "을"의 청구에 세금계산서 발행일 기준 <b id="bd_paydays"></b>일 이내에 현금으로 마케팅 대행비를 지급한다.</p>
+      </div>
+
+      <div class="art">
+        <h2>제7조 (제작물의 귀속 및 책임)</h2>
+        <p class="li">① "갑"이 비용을 지불 또는 사용을 위해서 인수한 모든 제작물(미완성 제작물 및 시안 포함, 이하 "갑의 제작물"이라 한다), 자료, 정보 및 그에 속한 모든 권리는 관련 법령이 허용하는 범위 내에서 "갑"이 소유하며, "을"은 타업체에게 "갑의 제작물"을 제공하지 않는다.</p>
+        <p class="li">② 본 계약에 따라 "을"이 행한 업무에 대하여 최종 결정권자는 "갑"으로서 모든 결정에 대한 책임은 전적으로 "갑"이 부담한다.</p>
+        <p class="li">③ 제2항에도 불구하고 "을"이 명백히 고의로 허위의 자료를 근거로 제작된 제작물의 경우에는 "을"이 그에 대한 책임을 진다.</p>
+      </div>
+
+      <div class="art">
+        <h2>제8조 (계약의 양도)</h2>
+        <p>"을"은 "갑"의 서면승인 없이 본 계약의 권리 및 의무의 일부 또는 전부를 제3자에게 양도ㆍ이전하거나 담보물로 제공할 수 없다.</p>
+      </div>
+
+      <div class="art">
+        <h2>제9조 (계약의 해지)</h2>
+        <p class="li">① 계약 상대방(이하 "귀책당사자"라 한다)에게 다음 각호에 해당하는 사유가 발생할 경우 "갑" 또는 "을"(이하 "해지권자"라 한다)은 "귀책당사자"에게 그 사유를 통지하고 본 계약을 해지할 수 있으며, 이의 효력은 서면 통지 즉시 발생하는 것으로 한다.</p>
+        <p class="li" style="padding-left:28px;text-indent:-12px">1. "귀책당사자"가 본 계약을 위반하여 "해지권자"가 10일 이상의 기간을 정하여 이행을 최고하여도 이를 시정하지 않는 경우</p>
+        <p class="li" style="padding-left:28px;text-indent:-12px">2. "귀책당사자"에게 발행 수표, 어음 등의 지급거절 또는 부도가 발생한 경우나 파산, 회사정리, 화의, 워크아웃 기타 이와 유사한 절차의 신청이 있는 경우</p>
+        <p class="li" style="padding-left:28px;text-indent:-12px">3. "해지권자"의 사전 서면 승인 없이 "귀책당사자"가 본 계약상의 권리, 의무 등을 제3자에게 양도하였을 경우</p>
+        <p class="li">② 본 계약상 목적을 달성하는 것이 현저히 불가능하여 본 계약의 해지를 양당사자가 서면으로 동의할 경우, 본 계약은 해지된다.</p>
+      </div>
+
+      <div class="art">
+        <h2>제10조 (자료제공 및 기밀 유지)</h2>
+        <p class="li">① "갑" 또는 "을"은 본 계약기간 중 본 계약의 체결 또는 이행과 관련하여 알게 된 상대방의 영업비밀, 기술정보, 자료(이하 "비밀등"이라 한다)를 본 계약의 이행을 위해서만 사용하여야 하고, 계약기간 종료와 동시에 상대방에게 모든 "비밀등"을 반환하여야 한다.</p>
+        <p class="li">② "갑" 또는 "을"은 본 계약기간은 물론 종료 후에도 상대방이 제공한 "비밀등"을 상대방의 사전 서면 승낙 없이 제3자에게 누설ㆍ공개하여서는 아니되며, 외부유출로 야기되는 민형사상 일체의 책임은 유출한 측이 진다.</p>
+        <p class="li">③ "갑" 또는 "을"은 그 임직원, 관련자로 하여금 위 각항과 동일한 의무를 부담하도록 하여야 한다.</p>
+      </div>
+
+      <div class="art">
+        <h2>제11조 (신의성실의 의무)</h2>
+        <p>"갑" 또는 "을"은 본 계약의 목적 달성을 위해 신의성실의 원칙에 따라서 상호관련 업무에 협력한다.</p>
+      </div>
+
+      <div class="art">
+        <h2>제12조 (손해 배상)</h2>
+        <p>본 계약이 해지되거나 당사자 일방이 본 계약을 위반하는 경우, 귀책사유 있는 당사자는 이로 인하여 상대방에게 발생하는 모든 손해를 배상하여야 한다.</p>
+      </div>
+
+      <div class="art">
+        <h2>제13조 (불가항력)</h2>
+        <p>천재지변, 전쟁, 내란, 폭동, 정부규제 또는 사회통념상 이에 준하는 당사자 일방이 책임질 수 없는 사유(노사분규 제외)로 인하여 그 일방이 본 계약상의 의무를 이행하지 못하는 경우에는 그 책임을 면한다.</p>
+      </div>
+
+      <div class="art">
+        <h2>제14조 (소송의 합의 관할)</h2>
+        <p>본 계약 이행에 있어 "갑", "을" 간에 분쟁이 발생할 경우에는 주소지 관할 법원을 전속적 합의 관할 법원으로 하여 일체의 분쟁을 해결한다.</p>
+      </div>
+
+      <div class="art">
+        <h2>제15조 (효력 및 해석)</h2>
+        <p>본 계약의 효력은 계약일로부터 발효하고, 계약서에 정한 사항 이외의 것에 대해서는 일반적인 상관습에 준한다.</p>
+      </div>
+
+      <div class="art">
+        <h2>제16조 (계약서의 보완)</h2>
+        <p>본 계약서의 세부적인 이행사항에 관하여 내용 보완이 필요한 경우 "갑", "을"은 상호 협의하여 결정한다.</p>
+      </div>
+
+      <div class="art" id="special_block_blog" style="display:none">
+        <h2>제17조 (특약사항)</h2>
+        <div id="d_special_blog" class="special-body"></div>
+      </div>
+
+      <p class="lead" style="margin-top:22px">본 계약의 체결을 증명하기 위하여 본 계약서를 이(2)부 작성, 날인 후 "갑", "을"이 각각 일(1)부씩 보관한다.</p>
+
+      <div class="sign">
+        <div class="date" id="bd_date"></div>
+        <div class="sb">
+          <div class="sh">갑 (의뢰자)</div>
+          <div class="sr"><span class="sk">상호</span><span id="sb2_b_name"></span></div>
+          <div class="sr"><span class="sk">대표자</span><span id="sb2_b_ceo"></span></div>
+          <div class="sr"><span class="sk">주소</span><span id="sb2_b_addr"></span></div>
+          <div class="seal"><span>서명 또는 날인</span><span class="box">印</span></div>
+        </div>
+        <div class="sb">
+          <div class="sh">을 (대행사)</div>
+          <div class="sr"><span class="sk">상호</span><span id="sb2_g_name"></span></div>
+          <div class="sr"><span class="sk">대표자</span><span id="sb2_g_ceo"></span></div>
+          <div class="sr"><span class="sk">사업자번호</span><span id="sb2_g_biz"></span></div>
+          <div class="sr"><span class="sk">주소</span><span id="sb2_g_addr"></span></div>
+          <div class="seal"><span>서명 또는 날인</span><span class="box">印</span></div>
+        </div>
+      </div>
+    </article>
+
+    <!-- ============ 네이버 플레이스 상위노출 보장형 계약서 ============ -->
+    <article class="doc" id="doc_place" style="display:none">
+      <div class="y">CONTRACT 2026</div>
+      <h1>온라인 마케팅 대행 계약서</h1>
+      <div class="tagline">네이버 플레이스 상위노출 보장형</div>
+
+      <div class="parties">
+        <div class="party">
+          <div class="ph">갑 (의뢰자)</div>
+          <div class="pb">
+            <div class="pr"><span class="pk">상호</span><span class="pv" id="pld_b_name"></span></div>
+            <div class="pr"><span class="pk">대표자</span><span class="pv" id="pld_b_ceo"></span></div>
+            <div class="pr"><span class="pk">대표연락처</span><span class="pv" id="pld_b_tel"></span></div>
+            <div class="pr"><span class="pk">주소</span><span class="pv" id="pld_b_addr"></span></div>
+          </div>
+        </div>
+        <div class="party">
+          <div class="ph">을 (대행사)</div>
+          <div class="pb">
+            <div class="pr"><span class="pk">상호</span><span class="pv" id="pld_g_name"></span></div>
+            <div class="pr"><span class="pk">대표자</span><span class="pv" id="pld_g_ceo"></span></div>
+            <div class="pr"><span class="pk">사업자번호</span><span class="pv" id="pld_g_biz"></span></div>
+            <div class="pr"><span class="pk">연락처</span><span class="pv" id="pld_g_tel"></span></div>
+            <div class="pr"><span class="pk">주소</span><span class="pv" id="pld_g_addr"></span></div>
+          </div>
+        </div>
+      </div>
+
+      <p class="lead">마케팅 대행 의뢰자 <b id="pld_lead_b"></b>(이하 "갑"이라 한다) 및 대행사 <b id="pld_lead_g"></b>(이하 "을"이라 한다)는 "갑"의 온라인 마케팅 대행(이하 "서비스"라 한다)을 위하여 포괄적인 상호 협력 관계를 맺기로 합의하여 다음과 같이 계약을 체결한다.</p>
+
+      <div class="art">
+        <h2>제1조 (계약의 목적)</h2>
+        <p>본 계약은 "갑"과 "을" 간의 업무 제휴를 체결함에 따른 권리와 의무 및 필요한 제반사항을 규정하는데 그 목적이 있다.</p>
+      </div>
+
+      <div class="art">
+        <h2>제2조 (서비스의 정의)</h2>
+        <p>"을"이 "갑"에게 제공하는 "서비스"는 계약서 제3조 범위 안에서 이루어진다.</p>
+      </div>
+
+      <div class="art">
+        <h2>제3조 (서비스의 범위)</h2>
+        <p>"을"이 수행할 "서비스"의 범위는 다음과 같으며, "을"은 동 "서비스"의 수행 시 "서비스"의 구체적인 방안에 관하여 사전에 "갑"의 승인을 받아야 한다.</p>
+        <ul class="pkg-items" style="margin-top:6px">
+          <li>네이버 플레이스 상위 노출 — 목표 키워드 <b id="pld_kw"></b> · 네이버 모바일 검색 <b class="pld-rank"></b>위 이내 · <b class="pld-days"></b>일 보장</li>
+        </ul>
+      </div>
+
+      <div class="art">
+        <h2>제4조 (계약 일반)</h2>
+        <p class="li">① 계약기간 — "서비스" 계약의 유효 기간은 <b id="pld_start"></b>부터 <b id="pld_end"></b>까지로 한다. 단, 계약기간 만료일 (<b id="pld_notice"></b>)개월 전까지 당사자 일방이 상대방에 대하여 서면으로 갱신거절의 의사를 통지하거나 계약내용의 변경을 요청하지 아니하면, 본 계약은 계약만료 익일부터 (<b id="pld_renew"></b>)씩 동일 조건으로 자동 연장된다.</p>
+      </div>
+
+      <div class="art">
+        <h2>제5조 (마케팅 대행비)</h2>
+        <p class="li">① "갑"은 본 계약 체결과 동시에 마케팅 대행비로 일금 <b id="pld_amt_kr"></b>원정(<span class="pld-amt-num"></span>원, VAT 미포함)을 지급한다.</p>
+        <p class="li">② 네이버 플레이스 상위노출(목표 키워드 모바일 검색 <b class="pld-rank"></b>위 이내, <b class="pld-days"></b>일 보장) 미노출 시 "갑"의 결정에 따라 환불 또는 미노출 기간만큼 연장하여 진행한다.</p>
+        <p class="li">③ 플레이스 보장기간 미달성에 따른 환불계산식은 환불액 = {(<span class="pld-amt-num"></span>원_VAT 미포함 ÷ <b class="pld-days"></b>일) × 미노출 기간(<b class="pld-days"></b>일 − 노출일)}으로 계산하여 환불한다. (미노출 기간은 "을"의 보고 데이터로 책정한다)</p>
+        <p class="li">④ 기타 제비용은 "갑"과 "을"의 상호 협의 하에 정하기로 한다.</p>
+      </div>
+
+      <div class="art">
+        <h2>제6조 (마케팅 대행비의 청구 및 지급)</h2>
+        <p class="li">① "을"은 계약 완료 후 마케팅 대행에 따른 세금계산서를 발행하여 "갑"에게 청구한다.</p>
+        <p class="li">② "갑"은 "을"의 청구에 세금계산서 발행일 기준 <b id="pld_paydays"></b>일 이내에 현금으로 마케팅 대행비를 지급한다.</p>
+        <p class="li">③ "을"은 네이버 플레이스 상위노출(목표 키워드 모바일 검색 <b class="pld-rank"></b>위 이내) <b class="pld-days"></b>일 달성 시 "갑"에게 네이버 플레이스 마케팅 대행비를 청구한다.</p>
+      </div>
+
+      <div class="art">
+        <h2>제7조 (제작물의 귀속 및 책임)</h2>
+        <p class="li">① "갑"이 비용을 지불 또는 사용을 위해서 인수한 모든 제작물(미완성 제작물 및 시안 포함, 이하 "갑의 제작물"이라 한다), 자료, 정보 및 그에 속한 모든 권리는 관련 법령이 허용하는 범위 내에서 "갑"이 소유하며, "을"은 타업체에게 "갑의 제작물"을 제공하지 않는다.</p>
+        <p class="li">② 본 계약에 따라 "을"이 행한 업무에 대하여 최종 결정권자는 "갑"으로서 모든 결정에 대한 책임은 전적으로 "갑"이 부담한다.</p>
+        <p class="li">③ 제2항에도 불구하고 "을"이 명백히 고의로 허위의 자료를 근거로 제작된 제작물의 경우에는 "을"이 그에 대한 책임을 진다.</p>
+      </div>
+
+      <div class="art">
+        <h2>제8조 (계약의 양도)</h2>
+        <p>"을"은 "갑"의 서면승인 없이 본 계약의 권리 및 의무의 일부 또는 전부를 제3자에게 양도ㆍ이전하거나 담보물로 제공할 수 없다.</p>
+      </div>
+
+      <div class="art">
+        <h2>제9조 (계약의 해지)</h2>
+        <p class="li">① 계약 상대방(이하 "귀책당사자"라 한다)에게 다음 각호에 해당하는 사유가 발생할 경우 "갑" 또는 "을"(이하 "해지권자"라 한다)은 "귀책당사자"에게 그 사유를 통지하고 본 계약을 해지할 수 있으며, 이의 효력은 서면 통지 즉시 발생하는 것으로 한다.</p>
+        <p class="li" style="padding-left:28px;text-indent:-12px">1. "귀책당사자"가 본 계약을 위반하여 "해지권자"가 10일 이상의 기간을 정하여 이행을 최고하여도 이를 시정하지 않는 경우</p>
+        <p class="li" style="padding-left:28px;text-indent:-12px">2. "귀책당사자"에게 발행 수표, 어음 등의 지급거절 또는 부도가 발생한 경우나 파산, 회사정리, 화의, 워크아웃 기타 이와 유사한 절차의 신청이 있는 경우</p>
+        <p class="li" style="padding-left:28px;text-indent:-12px">3. "해지권자"의 사전 서면 승인 없이 "귀책당사자"가 본 계약상의 권리, 의무 등을 제3자에게 양도하였을 경우</p>
+        <p class="li">② 본 계약상 목적을 달성하는 것이 현저히 불가능하여 본 계약의 해지를 양당사자가 서면으로 동의할 경우, 본 계약은 해지된다.</p>
+      </div>
+
+      <div class="art">
+        <h2>제10조 (자료제공 및 기밀 유지)</h2>
+        <p class="li">① "갑" 또는 "을"은 본 계약기간 중 본 계약의 체결 또는 이행과 관련하여 알게 된 상대방의 영업비밀, 기술정보, 자료(이하 "비밀등"이라 한다)를 본 계약의 이행을 위해서만 사용하여야 하고, 계약기간 종료와 동시에 상대방에게 모든 "비밀등"을 반환하여야 한다.</p>
+        <p class="li">② "갑" 또는 "을"은 본 계약기간은 물론 종료 후에도 상대방이 제공한 "비밀등"을 상대방의 사전 서면 승낙 없이 제3자에게 누설ㆍ공개하여서는 아니되며, 외부유출로 야기되는 민형사상 일체의 책임은 유출한 측이 진다.</p>
+        <p class="li">③ "갑" 또는 "을"은 그 임직원, 관련자로 하여금 위 각항과 동일한 의무를 부담하도록 하여야 한다.</p>
+      </div>
+
+      <div class="art">
+        <h2>제11조 (신의성실의 의무)</h2>
+        <p>"갑" 또는 "을"은 본 계약의 목적 달성을 위해 신의성실의 원칙에 따라서 상호관련 업무에 협력한다.</p>
+      </div>
+
+      <div class="art">
+        <h2>제12조 (손해 배상)</h2>
+        <p>본 계약이 해지되거나 당사자 일방이 본 계약을 위반하는 경우, 귀책사유 있는 당사자는 이로 인하여 상대방에게 발생하는 모든 손해를 배상하여야 한다.</p>
+      </div>
+
+      <div class="art">
+        <h2>제13조 (불가항력)</h2>
+        <p>천재지변, 전쟁, 내란, 폭동, 정부규제 또는 사회통념상 이에 준하는 당사자 일방이 책임질 수 없는 사유(노사분규 제외)로 인하여 그 일방이 본 계약상의 의무를 이행하지 못하는 경우에는 그 책임을 면한다.</p>
+      </div>
+
+      <div class="art">
+        <h2>제14조 (소송의 합의 관할)</h2>
+        <p>본 계약 이행에 있어 "갑", "을" 간에 분쟁이 발생할 경우에는 서울중앙지방법원을 전속적 합의 관할 법원으로 하여 일체의 분쟁을 해결한다.</p>
+      </div>
+
+      <div class="art">
+        <h2>제15조 (효력 및 해석)</h2>
+        <p>본 계약의 효력은 계약일로부터 발효하고, 계약서에 정한 사항 이외의 것에 대해서는 일반적인 상관습에 준한다.</p>
+      </div>
+
+      <div class="art">
+        <h2>제16조 (계약서의 보완)</h2>
+        <p>본 계약서의 세부적인 이행사항에 관하여 내용 보완이 필요한 경우 "갑", "을"은 상호 협의하여 결정한다.</p>
+      </div>
+
+      <div class="art" id="special_block_place" style="display:none">
+        <h2>제17조 (특약사항)</h2>
+        <div id="d_special_place" class="special-body"></div>
+      </div>
+
+      <p class="lead" style="margin-top:22px">본 계약의 체결을 증명하기 위하여 본 계약서를 이(2)부 작성, 날인 후 "갑", "을"이 각각 일(1)부씩 보관한다.</p>
+
+      <div class="sign">
+        <div class="date" id="pld_date"></div>
+        <div class="sb">
+          <div class="sh">갑 (의뢰자)</div>
+          <div class="sr"><span class="sk">상호</span><span id="pls_b_name"></span></div>
+          <div class="sr"><span class="sk">대표자</span><span id="pls_b_ceo"></span></div>
+          <div class="sr"><span class="sk">주소</span><span id="pls_b_addr"></span></div>
+          <div class="seal"><span>서명 또는 날인</span><span class="box">印</span></div>
+        </div>
+        <div class="sb">
+          <div class="sh">을 (대행사)</div>
+          <div class="sr"><span class="sk">상호</span><span id="pls_g_name"></span></div>
+          <div class="sr"><span class="sk">대표자</span><span id="pls_g_ceo"></span></div>
+          <div class="sr"><span class="sk">사업자번호</span><span id="pls_g_biz"></span></div>
+          <div class="sr"><span class="sk">주소</span><span id="pls_g_addr"></span></div>
+          <div class="seal"><span>서명 또는 날인</span><span class="box">印</span></div>
+        </div>
+      </div>
+    </article>
+
+    <!-- ============ 네이버 클립(숏폼) 계약서 ============ -->
+    <article class="doc" id="doc_clip" style="display:none">
+      <div class="y">CONTRACT 2026</div>
+      <h1 id="cld_title">네이버 클립(숏폼) 카드뉴스 제작 대행 계약서</h1>
+      <div class="tagline" id="cld_tag">숏폼 카드뉴스 제작·발행 대행</div>
+
+      <div class="parties">
+        <div class="party">
+          <div class="ph">갑 (의뢰자)</div>
+          <div class="pb">
+            <div class="pr"><span class="pk">상호</span><span class="pv" id="cld_b_name"></span></div>
+            <div class="pr"><span class="pk">대표자</span><span class="pv" id="cld_b_ceo"></span></div>
+            <div class="pr"><span class="pk">대표연락처</span><span class="pv" id="cld_b_tel"></span></div>
+            <div class="pr"><span class="pk">주소</span><span class="pv" id="cld_b_addr"></span></div>
+          </div>
+        </div>
+        <div class="party">
+          <div class="ph">을 (대행사)</div>
+          <div class="pb">
+            <div class="pr"><span class="pk">상호</span><span class="pv" id="cld_g_name"></span></div>
+            <div class="pr"><span class="pk">대표자</span><span class="pv" id="cld_g_ceo"></span></div>
+            <div class="pr"><span class="pk">사업자번호</span><span class="pv" id="cld_g_biz"></span></div>
+            <div class="pr"><span class="pk">연락처</span><span class="pv" id="cld_g_tel"></span></div>
+            <div class="pr"><span class="pk">주소</span><span class="pv" id="cld_g_addr"></span></div>
+          </div>
+        </div>
+      </div>
+
+      <p class="lead">마케팅 대행 의뢰자 <b id="cld_lead_b"></b>(이하 "갑"이라 한다) 및 대행사 <b id="cld_lead_g"></b>(이하 "을"이라 한다)는 "갑"의 온라인 마케팅 대행(이하 "서비스"라 한다)을 위하여 포괄적인 상호 협력 관계를 맺기로 합의하여 다음과 같이 계약을 체결한다.</p>
+
+      <div class="art">
+        <h2>제1조 (계약의 목적)</h2>
+        <p>본 계약은 "갑"과 "을" 간의 업무 제휴를 체결함에 따른 권리와 의무 및 필요한 제반사항을 규정하는데 그 목적이 있다.</p>
+      </div>
+
+      <div class="art">
+        <h2>제2조 (서비스의 정의)</h2>
+        <p>"을"이 "갑"에게 제공하는 "서비스"는 계약서 제3조 범위 안에서 이루어진다.</p>
+      </div>
+
+      <div class="art">
+        <h2>제3조 (서비스의 범위)</h2>
+        <p>"을"이 수행할 "서비스"의 범위는 다음과 같으며, "을"은 동 "서비스"의 수행 시 "서비스"의 구체적인 방안에 관하여 사전에 "갑"의 승인을 받아야 한다.</p>
+        <div id="cld_scope"></div>
+      </div>
+
+      <div class="art">
+        <h2>제4조 (계약 일반)</h2>
+        <p class="li">① 계약기간 — "서비스" 계약의 유효 기간은 <b id="cld_start"></b>부터 <b id="cld_end"></b>까지로 한다. 단, 계약기간 만료일 (<b id="cld_notice"></b>)개월 전까지 당사자 일방이 상대방에 대하여 서면으로 갱신거절의 의사를 통지하거나 계약내용의 변경을 요청하지 아니하면, 본 계약은 계약만료 익일부터 (<b id="cld_renew"></b>)개월씩 동일 조건으로 자동 연장된다.</p>
+        <p class="li" id="cld_min3" style="display:none">② 월 5건 상품의 최소 계약기간은 3개월로 한다.</p>
+      </div>
+
+      <div class="art">
+        <h2>제5조 (마케팅 대행비)</h2>
+        <div id="cld_fee_body"></div>
+      </div>
+
+      <div class="art">
+        <h2>제6조 (마케팅 대행비의 청구 및 지급)</h2>
+        <p class="li">① 본 "서비스"는 선결제 방식을 원칙으로 하며, "갑"은 매월 업무 개시일 전일까지 "을"이 지정한 계좌로 입금 또는 카드 결제를 완료한다.</p>
+        <p class="li">② 기타 제비용은 "갑"과 "을"의 상호 협의 하에 정하기로 한다.</p>
+      </div>
+
+      <div class="art">
+        <h2>제7조 (제작물의 귀속 및 책임)</h2>
+        <p class="li">① "갑"이 비용을 지불 또는 사용을 위해서 인수한 모든 제작물(미완성 제작물 및 시안 포함, 이하 "갑의 제작물"이라 한다), 자료, 정보 및 그에 속한 모든 권리는 관련 법령이 허용하는 범위 내에서 "갑"이 소유하며, "을"은 타업체에게 "갑의 제작물"을 제공하지 않는다.</p>
+        <p class="li">② 본 계약에 따라 "을"이 행한 업무에 대하여 최종 결정권자는 "갑"으로서 모든 결정에 대한 책임은 전적으로 "갑"이 부담한다.</p>
+        <p class="li">③ 제2항에도 불구하고 "을"이 명백히 고의로 허위의 자료를 근거로 제작된 제작물의 경우에는 "을"이 그에 대한 책임을 진다.</p>
+      </div>
+
+      <div class="art">
+        <h2>제8조 (계약의 양도)</h2>
+        <p>"을"은 "갑"의 서면승인 없이 본 계약의 권리 및 의무의 일부 또는 전부를 제3자에게 양도ㆍ이전하거나 담보물로 제공할 수 없다.</p>
+      </div>
+
+      <div class="art">
+        <h2>제9조 (계약의 해지)</h2>
+        <p class="li">① 계약 상대방(이하 "귀책당사자"라 한다)에게 다음 각호에 해당하는 사유가 발생할 경우 "갑" 또는 "을"(이하 "해지권자"라 한다)은 "귀책당사자"에게 그 사유를 통지하고 본 계약을 해지할 수 있으며, 이의 효력은 서면 통지 즉시 발생하는 것으로 한다.</p>
+        <p class="li" style="padding-left:28px;text-indent:-12px">1. "귀책당사자"가 본 계약을 위반하여 "해지권자"가 10일 이상의 기간을 정하여 이행을 최고하여도 이를 시정하지 않는 경우</p>
+        <p class="li" style="padding-left:28px;text-indent:-12px">2. "귀책당사자"에게 발행 수표, 어음 등의 지급거절 또는 부도가 발생한 경우나 파산, 회사정리, 화의, 워크아웃 기타 이와 유사한 절차의 신청이 있는 경우</p>
+        <p class="li" style="padding-left:28px;text-indent:-12px">3. "해지권자"의 사전 서면 승인 없이 "귀책당사자"가 본 계약상의 권리, 의무 등을 제3자에게 양도하였을 경우</p>
+        <p class="li">② 본 계약상 목적을 달성하는 것이 현저히 불가능하여 본 계약의 해지를 양당사자가 서면으로 동의할 경우, 본 계약은 해지된다.</p>
+      </div>
+
+      <div class="art">
+        <h2>제10조 (자료제공 및 기밀 유지)</h2>
+        <p class="li">① "갑" 또는 "을"은 본 계약기간 중 본 계약의 체결 또는 이행과 관련하여 알게 된 상대방의 영업비밀, 기술정보, 자료(이하 "비밀등"이라 한다)를 본 계약의 이행을 위해서만 사용하여야 하고, 계약기간 종료와 동시에 상대방에게 모든 "비밀등"을 반환하여야 한다.</p>
+        <p class="li">② "갑" 또는 "을"은 본 계약기간은 물론 종료 후에도 상대방이 제공한 "비밀등"을 상대방의 사전 서면 승낙 없이 제3자에게 누설ㆍ공개하여서는 아니되며, 외부유출로 야기되는 민형사상 일체의 책임은 유출한 측이 진다.</p>
+        <p class="li">③ "갑" 또는 "을"은 그 임직원, 관련자로 하여금 위 각항과 동일한 의무를 부담하도록 하여야 한다.</p>
+      </div>
+
+      <div class="art">
+        <h2>제11조 (신의성실의 의무)</h2>
+        <p>"갑" 또는 "을"은 본 계약의 목적 달성을 위해 신의성실의 원칙에 따라서 상호관련 업무에 협력한다.</p>
+      </div>
+
+      <div class="art">
+        <h2>제12조 (손해 배상)</h2>
+        <p>본 계약이 해지되거나 당사자 일방이 본 계약을 위반하는 경우, 귀책사유 있는 당사자는 이로 인하여 상대방에게 발생하는 모든 손해를 배상하여야 한다.</p>
+      </div>
+
+      <div class="art">
+        <h2>제13조 (불가항력)</h2>
+        <p>천재지변, 전쟁, 내란, 폭동, 정부규제 또는 사회통념상 이에 준하는 당사자 일방이 책임질 수 없는 사유(노사분규 제외)로 인하여 그 일방이 본 계약상의 의무를 이행하지 못하는 경우에는 그 책임을 면한다.</p>
+      </div>
+
+      <div class="art">
+        <h2>제14조 (소송의 합의 관할)</h2>
+        <p>본 계약 이행에 있어 "갑", "을" 간에 분쟁이 발생할 경우에는 주소지 관할 법원을 전속적 합의 관할 법원으로 하여 일체의 분쟁을 해결한다.</p>
+      </div>
+
+      <div class="art">
+        <h2>제15조 (효력 및 해석)</h2>
+        <p>본 계약의 효력은 계약일로부터 발효하고, 계약서에 정한 사항 이외의 것에 대해서는 일반적인 상관습에 준한다.</p>
+      </div>
+
+      <div class="art">
+        <h2>제16조 (계약서의 보완)</h2>
+        <p>본 계약서의 세부적인 이행사항에 관하여 내용 보완이 필요한 경우 "갑", "을"은 상호 협의하여 결정한다.</p>
+      </div>
+
+      <div class="art" id="special_block_clip" style="display:none">
+        <h2>제17조 (특약사항)</h2>
+        <div id="d_special_clip" class="special-body"></div>
+      </div>
+
+      <p class="lead" style="margin-top:22px">본 계약의 체결을 증명하기 위하여 본 계약서를 이(2)부 작성, 날인 후 "갑", "을"이 각각 일(1)부씩 보관한다.</p>
+
+      <div class="sign">
+        <div class="date" id="cld_date"></div>
+        <div class="sb">
+          <div class="sh">갑 (의뢰자)</div>
+          <div class="sr"><span class="sk">상호</span><span id="cls_b_name"></span></div>
+          <div class="sr"><span class="sk">대표자</span><span id="cls_b_ceo"></span></div>
+          <div class="sr"><span class="sk">주소</span><span id="cls_b_addr"></span></div>
+          <div class="seal"><span>서명 또는 날인</span><span class="box">印</span></div>
+        </div>
+        <div class="sb">
+          <div class="sh">을 (대행사)</div>
+          <div class="sr"><span class="sk">상호</span><span id="cls_g_name"></span></div>
+          <div class="sr"><span class="sk">대표자</span><span id="cls_g_ceo"></span></div>
+          <div class="sr"><span class="sk">사업자번호</span><span id="cls_g_biz"></span></div>
+          <div class="sr"><span class="sk">주소</span><span id="cls_g_addr"></span></div>
+          <div class="seal"><span>서명 또는 날인</span><span class="box">印</span></div>
+        </div>
+      </div>
+    </article>
+  </main>
+</div>
+
+<!-- PDF 생성 중 오버레이 -->
+<div id="pdf_busy" style="display:none;position:fixed;inset:0;z-index:998;background:rgba(255,255,255,.92);align-items:center;justify-content:center">
+  <div style="text-align:center;font-family:'Noto Sans KR',sans-serif">
+    <div style="font-size:34px">⏳</div>
+    <div style="margin-top:10px;font-weight:700;color:#0f4c5c;font-size:15px">PDF 생성 중…</div>
+    <div style="margin-top:4px;font-size:12px;color:#7b8194">잠시만 기다려 주세요 (약 3~5초)</div>
+  </div>
+</div>
+
+<!-- ============ PDF 미리보기 모달 ============ -->
+<div id="pdf_modal" style="display:none;position:fixed;inset:0;z-index:999;background:rgba(15,25,40,.6)">
+  <div style="position:absolute;inset:3% 6%;background:#fff;border-radius:14px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.35)">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid #e3e5ea">
+      <div style="flex:1;min-width:0;margin-right:14px">
+        <div style="font-weight:700;color:#0f4c5c;font-size:15px">PDF 미리보기</div>
+        <div id="pdf_prev_size" style="font-size:12px;color:#7b8194;margin-top:2px"></div>
+      </div>
+      <button onclick="closePdfModal()" style="border:none;background:#f1f2f5;border-radius:8px;padding:8px 12px;cursor:pointer;font-family:inherit;font-size:13px">✕ 닫기</button>
+    </div>
+    <div style="flex:1;overflow:auto;background:#4a5160;padding:24px;text-align:center">
+      <img id="pdf_prev_img" alt="PDF 미리보기" style="display:block;margin:0 auto;width:auto;max-width:min(100%,794px);height:auto;background:#fff;box-shadow:0 6px 24px rgba(0,0,0,.4);border-radius:2px">
+    </div>
+    <div style="padding:14px 20px;border-top:1px solid #e3e5ea;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <label for="pdf_name_input" style="font-size:13px;font-weight:700;color:#0f4c5c;white-space:nowrap">💾 파일명</label>
+      <input id="pdf_name_input" style="flex:1;min-width:180px;padding:10px 12px;border:2px solid #0f4c5c;border-radius:8px;font-family:inherit;font-size:13px;color:#1a2238;font-weight:600;background:#f7fbfc" placeholder="저장할 파일명 입력">
+      <span style="font-size:12px;color:#7b8194;font-weight:600">.pdf</span>
+      <button onclick="closePdfModal()" style="border:1px solid #d9dbe2;background:#fff;border-radius:9px;padding:11px 16px;cursor:pointer;font-family:inherit;font-size:13px;color:#3a4256">취소</button>
+      <button id="pdf_save_btn" onclick="savePdfFile()" style="border:none;background:#0f4c5c;color:#fff;border-radius:9px;padding:11px 20px;cursor:pointer;font-family:inherit;font-size:13px;font-weight:700">⬇ 저장</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const $ = id => document.getElementById(id);
+  const won = n => (isNaN(n)||n===0) ? "0원" : Number(n).toLocaleString('ko-KR') + "원";
+  const dash = v => (v && v.trim()) ? v : "—";
+  // 주소 표시용: 하이픈을 줄바꿈 불가 문자로 바꿔 캡처 시 글자 겹침 방지
+  const nb = v => dash(v).replace(/-/g,'\u2011');
+
+  // 천단위 콤마 입력 보조
+  document.querySelectorAll('.amtnum').forEach(inp=>{
+    inp.addEventListener('input',()=>{
+      let v = inp.value.replace(/[^\d]/g,'');
+      inp.value = v ? Number(v).toLocaleString('ko-KR') : '';
+      render();
+    });
+    // 초기 콤마 적용
+    if(inp.value) inp.value = Number(inp.value.replace(/[^\d]/g,'')).toLocaleString('ko-KR');
+  });
+  const numOf = id => Number(($(id).value||'0').replace(/[^\d]/g,''))||0;
+
+  // 옵션 체크박스 토글 (+ 묶음 패키지(7) ↔ 개별(6,3,4) 상호 배타)
+  function syncOptUI(i){
+    $('opt'+i).classList.toggle('on',$('o'+i+'_chk').checked);
+    $('opt'+i).classList.toggle('off',!$('o'+i+'_chk').checked);
+  }
+  [1,2,3,4,5,6,7].forEach(i=>{
+    $('o'+i+'_chk').addEventListener('change',()=>{
+      if(i===7 && $('o7_chk').checked){
+        // 묶음 선택 → 개별 3개 자동 해제
+        [6,3,4].forEach(j=>{ $('o'+j+'_chk').checked=false; syncOptUI(j); });
+      }
+      if([6,3,4].includes(i) && $('o'+i+'_chk').checked){
+        // 개별 선택 → 묶음 자동 해제
+        $('o7_chk').checked=false; syncOptUI(7);
+      }
+      syncOptUI(i);
+      render();
+    });
+  });
+
+  // 모든 입력 변화 감지
+  document.querySelectorAll('input, textarea').forEach(el=>el.addEventListener('input',render));
+
+  function fmtDate(){
+    const v = $('c_date').value;
+    if(!v) return "계약일: 　　　년 　　월 　　일";
+    const [y,m,d] = v.split('-');
+    return `계약일: ${y}년 ${Number(m)}월 ${Number(d)}일`;
+  }
+  function fmtYMD(v){
+    if(!v) return "　　　년 　　월 　　일";
+    const [y,m,d] = v.split('-');
+    return `${y}년 ${Number(m)}월 ${Number(d)}일`;
+  }
+
+  // 숫자 → 한글 금액 (600000 → 육십만, 1500000 → 일백오십만)
+  function koreanWon(n){
+    if(!n || n<=0) return '영';
+    const d=['','일','이','삼','사','오','육','칠','팔','구'];
+    const u=['','십','백','천'];
+    const g=['','만','억','조'];
+    let out='', gi=0;
+    while(n>0){
+      const part=n%10000;
+      if(part){
+        let ps='';
+        const str=String(part);
+        for(let i=0;i<str.length;i++){
+          const dig=+str[i], pos=str.length-1-i;
+          if(!dig) continue;
+          ps += (dig===1 && pos===1 ? '' : d[dig]) + u[pos];   // '일십'은 '십'으로
+        }
+        out = ps + g[gi] + out;
+      }
+      n=Math.floor(n/10000); gi++;
+    }
+    return out;
+  }
+
+  /* ============ PDF 파일 생성 (미리보기 → 저장) ============ */
+  let pdfBlob = null, pdfName = '계약서.pdf';
+  // 클로드 게시 페이지에서는 다운로드 권한을 미리 준비해 둔다
+  try{ if(window.claude && window.claude.use) window.claude.use('downloads'); }catch(e){}
+
+  function pdfOpts(){
+    return {
+      margin:[10,8,12,8],
+      image:{type:'jpeg',quality:0.96},
+      html2canvas:{scale:2,useCORS:true,scrollY:0},
+      jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},
+      pagebreak:{mode:['css','legacy']}
+    };
+  }
+
+  // 고정 1000px 크기의 독립 iframe 안에서 캡처 — 바깥 창 크기·배율의 영향을 원천 차단
+  const H2P_SRC = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+  let PDF_PATH = '';   // 실제 사용된 생성 경로 (진단용): A=직접iframe, B=srcdoc, C=본문내
+  const FONT_LINK = '<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">';
+
+  // [경로 B] srcdoc + postMessage — 고정 1000px 독립 프레임에서 생성 (바깥 창 크기·배율·보안설정과 완전 분리)
+  // 페이지의 모든 스타일을 수집 (게시 환경에서는 플랫폼 리셋 스타일이 앞에 추가되므로 전부 복사해야 함)
+  function allStyles(){
+    return Array.prototype.map.call(document.querySelectorAll('style'), function(s){ return s.outerHTML; }).join('');
+  }
+
+  function srcdocGen(docEl){
+    return new Promise((resolve, reject)=>{
+      const token = 'pdf_' + Math.random().toString(36).slice(2);
+      const styleTag = allStyles();
+      const docHtml = docEl.outerHTML;
+      const runner =
+        '<scr'+'ipt src="'+H2P_SRC+'"><\/scr'+'ipt>'
+        + '<scr'+'ipt>(function(){'
+        + 'function fail(m){ try{ parent.postMessage({token:"'+token+'",ok:false,msg:String(m)},"*"); }catch(e){} }'
+        + 'try{'
+        + 'var OPTS='+JSON.stringify(pdfOpts())+';'
+        // PDF 내부 콘텐츠 폭(px)과 계약서 폭을 1:1로 강제 일치 → 내용이 캔버스를 넘는 것이 구조적으로 불가능
+        + 'var INNER=Math.floor((210-OPTS.margin[1]-OPTS.margin[3])*96/25.4);'
+        + 'var wrap=document.getElementById("pdfwrap");'
+        + 'wrap.style.width=INNER+"px";'
+        + 'var el=document.querySelector(".doc");'
+        + 'el.classList.remove("pdf-fixed");'
+        + 'el.style.display="block"; el.style.width="100%"; el.style.maxWidth="none";'
+        + 'el.style.margin="0"; el.style.boxShadow="none";'
+        + 'var elW=0;'
+        + 'var done=false;'
+        + 'function go(){ if(done)return; done=true;'
+        + ' elW=Math.round(el.getBoundingClientRect().width);'
+        + ' if(typeof html2pdf==="undefined"){ fail("nolib"); return; }'
+        + ' html2pdf().set(OPTS).from(el).outputPdf("blob").then(function(b){'
+        + '   return html2pdf().set(OPTS).from(el).outputImg("datauristring").then(function(u){'
+        + '     parent.postMessage({token:"'+token+'",ok:true,blob:b,uri:u,elW:elW,inner:INNER},"*");'
+        + '   });'
+        + ' }).catch(function(e){ fail(e&&e.message||e); });'
+        + '}'
+        + 'if(document.fonts&&document.fonts.ready){ document.fonts.ready.then(function(){ setTimeout(go,150); }); }'
+        + 'setTimeout(go,2600);'
+        + '}catch(e){ fail(e&&e.message||e); }'
+        + '})();<\/scr'+'ipt>';
+      const html = '<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8">'+FONT_LINK+styleTag
+        + '</head><body style="margin:0;background:#fff"><div id="pdfwrap">' + docHtml + '</div>' + runner + '</body></html>';
+      const f = document.createElement('iframe');
+      f.style.cssText = 'position:fixed;left:-12000px;top:0;width:1000px;height:1400px;border:0;';
+      let settled = false;
+      const onMsg = (e)=>{
+        const dd = e.data;
+        if(!dd || dd.token !== token) return;
+        settled = true;
+        window.removeEventListener('message', onMsg);
+        f.remove();
+        if(dd.ok) resolve({blob: dd.blob, uri: dd.uri, elW: dd.elW||0, inner: dd.inner||0});
+        else reject(new Error(dd.msg || 'srcdoc fail'));
+      };
+      window.addEventListener('message', onMsg);
+      setTimeout(()=>{ if(!settled){ window.removeEventListener('message', onMsg); f.remove(); reject(new Error('timeout')); } }, 60000);
+      f.srcdoc = html;
+      document.body.appendChild(f);
+    });
+  }
+
+  // [경로 C] 최후 폴백 — 본문 내 캡처
+  function inWindowGen(docEl){
+    return new Promise((resolve, reject)=>{
+      if(typeof html2pdf === 'undefined'){ reject(new Error('nolib')); return; }
+      const wrap = document.createElement('div');
+      wrap.style.cssText = 'position:absolute;top:0;left:0;width:794px;background:#fbfaf7;z-index:1;';
+      const cloneEl = docEl.cloneNode(true);
+      cloneEl.classList.add('pdf-fixed');
+      cloneEl.style.display = 'block';
+      wrap.appendChild(cloneEl);
+      document.body.appendChild(wrap);
+      html2pdf().set(pdfOpts()).from(cloneEl).outputPdf('blob')
+        .then(b=> html2pdf().set(pdfOpts()).from(cloneEl).outputImg('datauristring').then(u=>({blob:b, uri:u})))
+        .then(r=>{ wrap.remove(); resolve(r); })
+        .catch(e=>{ wrap.remove(); reject(e); });
+    });
+  }
+
+  function genPDF(){
+    const m = (typeof MODE!=='undefined') ? MODE : 'home';
+    const docEl = $(MODE_DOC[m] || 'doc');
+    const clinic = ($('b_name').value||'').trim() || '병원';
+    let base;
+    if(m==='blog')       base = '한번_블로그_계약서_' + clinic;
+    else if(m==='place') base = '한번_플레이스 상위노출 보장형_계약서_' + clinic;
+    else if(m==='clip'){
+      const cp = (document.querySelector('input[name="clip_prod"]:checked')||{}).value || 'a';
+      base = (cp==='m' ? '한번_블로그·클립 결합_계약서_' : '한번_네이버클립_계약서_') + clinic;
+    }
+    else base = '한번_홈페이지_ai노출 최적화 계약서_' + clinic;
+    pdfName = base.replace(/[\\\/:*?"<>|]/g,'') + '.pdf';
+    const btn = $('pdf_btn'); const orig = btn.textContent;
+    btn.textContent = '⏳ PDF 생성 중…'; btn.disabled = true;
+    $('pdf_busy').style.display = 'flex';
+    const done = ()=>{ btn.textContent = orig; btn.disabled = false; $('pdf_busy').style.display='none'; };
+    const finish = (r)=>{
+      pdfBlob = r.blob;
+      DIAG_EXTRA = {elW: r.elW||0, inner: r.inner||0, ver: 'v15'};
+      $('pdf_prev_img').src = r.uri;
+      $('pdf_name_input').value = pdfName.replace(/\.pdf$/i,'');
+      $('pdf_prev_size').textContent = pdfBlob ? Math.round(pdfBlob.size/1024) + ' KB' : '';
+      $('pdf_modal').style.display = 'block';
+      done();
+      logDiag();
+    };
+    const failAll = ()=>{ done(); alert('PDF 생성에 실패했습니다. "브라우저로 인쇄" 버튼을 이용해 주세요.'); };
+    // 강제 경로 지정(진단용): URL에 ?pdfmode=b 또는 ?pdfmode=c
+    const force = (location.search.match(/pdfmode=([abc])/)||[])[1];
+    const tryB = ()=> srcdocGen(docEl).then(r=>{ PDF_PATH='B'; return r; });
+    const tryC = ()=> inWindowGen(docEl).then(r=>{ PDF_PATH='C'; return r; });
+    let chain;
+    if(force==='c') chain = tryC();
+    else chain = tryB().catch(()=> tryC());
+    chain.then(finish).catch(failAll);
+  }
+
+  // 진단 로그 — 게시 페이지에서만, 실패해도 무시
+  let DIAG_EXTRA = {};
+  async function logDiag(){
+    try{
+      if(!(window.claude && window.claude.use)) return;
+      const db = await window.claude.use('db');
+      if(!db) return;
+      const img = $('pdf_prev_img');
+      await db.doc('diag/last').set({
+        t: new Date().toISOString(),
+        path: PDF_PATH,
+        elW: DIAG_EXTRA.elW||0, inner: DIAG_EXTRA.inner||0, ver: DIAG_EXTRA.ver||'',
+        iw: window.innerWidth, ih: window.innerHeight,
+        dpr: window.devicePixelRatio || 1,
+        imgNW: img.naturalWidth, imgNH: img.naturalHeight,
+        imgCW: Math.round(img.getBoundingClientRect().width),
+        areaW: Math.round(img.parentElement.getBoundingClientRect().width),
+        blob: pdfBlob ? pdfBlob.size : 0,
+        ua: (navigator.userAgent||'').slice(0,140)
+      });
+    }catch(e){}
+  }
+
+  function closePdfModal(){ $('pdf_modal').style.display = 'none'; }
+
+  async function savePdfFile(){
+    if(!pdfBlob) return;
+    const sbtn = $('pdf_save_btn'); const so = sbtn.textContent;
+    sbtn.textContent = '저장 중…'; sbtn.disabled = true;
+    const back = ()=>{ sbtn.textContent = so; sbtn.disabled = false; };
+    // 사용자가 수정한 파일명 반영
+    let nm = ($('pdf_name_input').value || '').trim().replace(/[\\\/:*?"<>|]/g,'');
+    if(!nm) nm = pdfName.replace(/\.pdf$/i,'');
+    pdfName = nm.replace(/\.pdf$/i,'') + '.pdf';
+    // 0) 저장 위치 선택 창 (지원 환경: 크롬 등 — 폴더와 이름을 직접 지정)
+    if(window.showSaveFilePicker){
+      try{
+        const h = await window.showSaveFilePicker({
+          suggestedName: pdfName,
+          startIn: 'desktop',
+          types: [{description: 'PDF 문서', accept: {'application/pdf': ['.pdf']}}]
+        });
+        const ws = await h.createWritable();
+        await ws.write(pdfBlob);
+        await ws.close();
+        back(); closePdfModal(); return;
+      }catch(err){
+        if(err && err.name === 'AbortError'){ back(); return; }   // 사용자가 위치 선택 취소
+        // 보안 차단/미지원 → 아래 방식으로 폴백
+      }
+    }
+    // 1) 클로드 게시 페이지 → 다운로드 권한으로 저장
+    let dl = null;
+    try{ if(window.claude && window.claude.use) dl = await window.claude.use('downloads'); }catch(e){}
+    if(dl){
+      try{ await dl.save({filename: pdfName, data: pdfBlob}); back(); closePdfModal(); return; }
+      catch(err){
+        back();
+        if(err && err.code === 'declined') return;   // 사용자가 저장 취소
+        if(err && err.code === 'rate_limited'){ alert('저장 확인 창이 이미 열려 있습니다. 확인 후 다시 시도해 주세요.'); return; }
+        // 그 외 오류는 아래 직접 다운로드로 폴백
+      }
+    }
+    // 2) 일반 브라우저 → 직접 다운로드
+    try{
+      const u = URL.createObjectURL(pdfBlob);
+      const a = document.createElement('a'); a.href = u; a.download = pdfName;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(()=>URL.revokeObjectURL(u), 5000);
+      back(); closePdfModal();
+    }catch(e){
+      back();
+      alert('이 화면에서는 저장이 제한됩니다. 링크를 브라우저 새 탭에서 열어 다시 시도해 주세요.');
+    }
+  }
+
+  /* ============ 인쇄 (미리보기 iframe에서도 동작) ============ */
+  function printContract(){
+    if(window.self === window.top){ window.print(); return; }
+    // 미리보기(iframe) 안에서는 브라우저가 print()를 막는 경우가 있어 새 창에서 인쇄
+    const docEl = $(MODE_DOC[(typeof MODE!=='undefined')?MODE:'home'] || 'doc');
+    const styleTag = allStyles();
+    const w = window.open('', '_blank');
+    if(!w){ alert('팝업이 차단되어 인쇄 창을 열 수 없습니다.\n이 페이지를 브라우저 새 탭에서 직접 열면 인쇄 버튼이 바로 작동합니다.'); return; }
+    w.document.write('<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><title>한번 계약서</title>'
+      + '<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">'
+      + styleTag
+      + '<style>body{background:#fff!important;padding:0}.doc{box-shadow:none;margin:0 auto;display:block!important}</style>'
+      + '</head><body>' + docEl.outerHTML
+      + '<scr'+'ipt>window.onload=function(){setTimeout(function(){window.print();},600);};</scr'+'ipt>'
+      + '</body></html>');
+    w.document.close();
+  }
+
+  /* ============ 계약서 유형 전환 ============ */
+  let MODE='home';
+  const MODE_DOC = { home:'doc', blog:'doc_blog', place:'doc_place', clip:'doc_clip' };
+  const MODE_SUB = {
+    home:  '홈페이지 제작 · SEO·AEO·GEO 통합 계약서',
+    blog:  '네이버 블로그 마케팅 대행 계약서',
+    place: '네이버 플레이스 상위노출 보장형 계약서',
+    clip:  '네이버 클립(숏폼) 제작 대행 계약서'
+  };
+  function setMode(m){
+    MODE=m;
+    ['home','blog','place','clip'].forEach(k=>{
+      document.querySelectorAll('.mode-'+k).forEach(el=>el.style.display = m===k ? '' : 'none');
+      $(MODE_DOC[k]).style.display = m===k ? '' : 'none';
+      $('tab_'+k).classList.toggle('on', m===k);
+    });
+    $('h_g').textContent = m==='home' ? '공급사 (갑)' : '대행사 (을)';
+    $('h_b').textContent = m==='home' ? '의뢰인 (을)' : '의뢰자 (갑)';
+    $('brand_sub').textContent = MODE_SUB[m];
+    render();
+  }
+
+  function render(){
+    // 당사자
+    $('d_g_name').textContent = dash($('g_name').value);
+    $('d_g_ceo').textContent  = dash($('g_ceo').value);
+    $('d_g_biz').textContent  = dash($('g_biz').value);
+    $('d_g_tel').textContent  = dash($('g_tel').value);
+    $('d_g_addr').textContent = nb($('g_addr').value);
+    $('d_b_name').textContent = dash($('b_name').value);
+    $('d_b_ceo').textContent  = dash($('b_ceo').value);
+    $('d_b_tel').textContent  = dash($('b_tel').value);
+    $('d_b_addr').textContent = nb($('b_addr').value);
+
+    // 서명란
+    $('s_g_name').textContent = dash($('g_name').value);
+    $('s_g_ceo').textContent  = dash($('g_ceo').value);
+    $('s_g_biz').textContent  = dash($('g_biz').value);
+    $('s_g_addr').textContent = nb($('g_addr').value);
+    $('s_b_name').textContent = dash($('b_name').value);
+    $('s_b_ceo').textContent  = dash($('b_ceo').value);
+    $('s_b_addr').textContent = nb($('b_addr').value);
+
+    // 기본 패키지 금액 — 초기 구축비(1회성)
+    const home=numOf('a_home'), seo=numOf('a_seo'), geo=numOf('a_geo'), post=numOf('a_post');
+    const pkgBuild = home+seo+geo+post;   // 초기 구축 기본 합계
+    $('d_a_home').textContent  = won(home);
+    $('d_a_seo').textContent   = won(seo);
+    $('d_a_geo').textContent   = won(geo);
+    $('d_a_post').textContent  = post>0 ? won(post) : "포함";
+    $('d_pkg_sum').textContent = won(pkgBuild);
+
+    // 옵션 — 월 옵션(7:묶음 패키지, 6:월관리비, 3,4,2,1)과 1회성 옵션(5: 외국어 버전) 분리
+    // 표시 순서: 묶음(7) → 월관리비(6) → 포스팅(3) → 권위도(4) → 구글리뷰(2) → SEO상위(1) → 외국어(5)
+    let optBody = "", optMonthly = 0, anyOpt = false;
+    let foreignSel = false, foreignAmt = 0;
+    [7,6,3,4,2,1,5].forEach(i=>{
+      if($('o'+i+'_chk').checked){
+        anyOpt = true;
+        const nm = dash($('o'+i+'_name').value);
+        const amt = numOf('o'+i+'_amt');
+        const unit = $('o'+i+'_unit').value.trim();
+        if(i===5){ foreignSel = true; foreignAmt = amt; }   // 1회성 → 초기 구축에 합산
+        else { optMonthly += amt; }                          // 월 청구 옵션(7,6,1~4)
+        if(i===7){
+          // 통합 패키지 — 제목 + 구성 항목 ✓ 리스트로 표시
+          const items = ($('o7_items').value||'').split('\n').map(s=>s.trim()).filter(Boolean);
+          const lis = items.map(it=>`<li>${esc(it).replace(/&quot;/g,'"')}</li>`).join('');
+          optBody += `<tr><td>
+              <div class="pkg-title">${nm}<span class="pkg-badge">통합 구성</span></div>
+              <ul class="pkg-items">${lis}</ul>
+              <div class="pkg-note">※ 매월 청구 · 위 항목 일괄 제공</div>
+            </td><td class="amt" style="width:24%">${won(amt)} ${unit}</td></tr>`;
+        } else {
+          optBody += `<tr><td>${nm}</td><td class="amt" style="width:24%">${won(amt)} ${unit}</td></tr>`;
+        }
+      }
+    });
+    if(!anyOpt) optBody = `<tr class="muted-row"><td colspan="2" style="text-align:center">선택된 추가 옵션 없음</td></tr>`;
+    $('d_opt_body').innerHTML = optBody;
+
+    // 1회성(초기 구축) = 기본 구축 + 외국어 버전(선택 시)
+    const onceTotal = pkgBuild + (foreignSel ? foreignAmt : 0);
+    $('d_t_pkg').textContent = won(onceTotal);
+    $('d_t_pkg_note').innerHTML = foreignSel
+      ? "홈페이지 제작, SEO·AEO·GEO, 웹포스팅 탑재, <b>외국어 버전</b> 포함 — 계약 시 1회 납부"
+      : "홈페이지 제작, SEO·AEO·GEO, 웹포스팅 탑재 — 계약 시 1회 납부";
+
+    // 월 청구 옵션 합계 (월관리비 포함)
+    const hasMonthlyOpt = optMonthly > 0;
+    $('d_t_opt').textContent = hasMonthlyOpt ? (won(optMonthly)+" / 월") : "—";
+    $('d_t_opt_row').style.display = hasMonthlyOpt ? "" : "none";
+
+    // 총 계약금액 — 1회성 / 월비용 형식
+    const monthlyTotal = optMonthly;
+    $('d_t_total').innerHTML = `1회성: ${won(onceTotal)}<br>월비용: ${won(monthlyTotal)}`;
+
+    // 기간 / 날짜
+    $('d_period').textContent = dash($('c_period').value);
+    $('d_date').textContent = fmtDate();
+
+    // 특약사항 (있을 때만 표시)
+    const sp = ($('c_special').value || '').trim();
+    if(sp){
+      $('d_special').textContent = sp;   // textContent + white-space:pre-wrap → 줄바꿈 유지
+      $('special_block').style.display = '';
+    } else {
+      $('special_block').style.display = 'none';
+    }
+
+    /* ===== 블로그 마케팅 대행 계약서 ===== */
+    // 당사자 — 갑(의뢰자)=병원, 을(대행사)=한번
+    $('bd_b_name').textContent = dash($('b_name').value);
+    $('bd_b_ceo').textContent  = dash($('b_ceo').value);
+    $('bd_b_tel').textContent  = dash($('b_tel').value);
+    $('bd_b_addr').textContent = nb($('b_addr').value);
+    $('bd_g_name').textContent = dash($('g_name').value);
+    $('bd_g_ceo').textContent  = dash($('g_ceo').value);
+    $('bd_g_biz').textContent  = dash($('g_biz').value);
+    $('bd_g_tel').textContent  = dash($('g_tel').value);
+    $('bd_g_addr').textContent = nb($('g_addr').value);
+    $('bd_lead_b').textContent = dash($('b_name').value);
+    $('bd_lead_g').textContent = dash($('g_name').value);
+
+    // 제3조 본문 + 서비스 범위 (한 줄 → ✓ 항목)
+    $('bd_scope_intro').textContent = ($('bl_scope_intro').value||'').trim() || '"을"이 수행할 "서비스"의 범위는 다음과 같다.';
+    const scopeItems = ($('bl_scope').value||'').split('\n').map(s=>s.trim()).filter(Boolean);
+    $('bd_scope').innerHTML = scopeItems.length
+      ? scopeItems.map(s=>`<li>${esc(s)}</li>`).join('')
+      : '<li>—</li>';
+
+    // 제4조 계약기간
+    $('bd_start').textContent  = fmtYMD($('bl_start').value);
+    $('bd_end').textContent    = fmtYMD($('bl_end').value);
+    $('bd_notice').textContent = dash($('bl_notice').value);
+    $('bd_renew').textContent  = dash($('bl_renew').value);
+
+    // 제5조 대행비 (한글 + 숫자)
+    const fee = numOf('bl_fee');
+    $('bd_fee_kr').textContent  = koreanWon(fee);
+    $('bd_fee_num').textContent = fee.toLocaleString('ko-KR') + '원, VAT 별도';
+
+    // 제6조 지급기한
+    $('bd_paydays').textContent = dash($('bl_paydays').value);
+
+    // 제17조 특약 (공용 입력 공유)
+    if(sp){ $('d_special_blog').textContent = sp; $('special_block_blog').style.display=''; }
+    else   { $('special_block_blog').style.display='none'; }
+
+    // 서명란 / 계약일
+    $('bd_date').textContent = fmtDate();
+    $('sb2_b_name').textContent = dash($('b_name').value);
+    $('sb2_b_ceo').textContent  = dash($('b_ceo').value);
+    $('sb2_b_addr').textContent = nb($('b_addr').value);
+    $('sb2_g_name').textContent = dash($('g_name').value);
+    $('sb2_g_ceo').textContent  = dash($('g_ceo').value);
+    $('sb2_g_biz').textContent  = dash($('g_biz').value);
+    $('sb2_g_addr').textContent = nb($('g_addr').value);
+
+    /* ===== 네이버 플레이스 상위노출 보장형 ===== */
+    $('pld_b_name').textContent = dash($('b_name').value);
+    $('pld_b_ceo').textContent  = dash($('b_ceo').value);
+    $('pld_b_tel').textContent  = dash($('b_tel').value);
+    $('pld_b_addr').textContent = nb($('b_addr').value);
+    $('pld_g_name').textContent = dash($('g_name').value);
+    $('pld_g_ceo').textContent  = dash($('g_ceo').value);
+    $('pld_g_biz').textContent  = dash($('g_biz').value);
+    $('pld_g_tel').textContent  = dash($('g_tel').value);
+    $('pld_g_addr').textContent = nb($('g_addr').value);
+    $('pld_lead_b').textContent = dash($('b_name').value);
+    $('pld_lead_g').textContent = dash($('g_name').value);
+
+    const plKw   = ($('pl_kw').value||'').trim();
+    const plRank = ($('pl_rank').value||'').trim() || '5';
+    const plDays = parseInt(($('pl_days').value||'').replace(/[^\d]/g,''),10) || 25;
+    const plAmt  = numOf('pl_amt');
+    $('pld_kw').textContent = plKw ? ('"'+plKw+'"') : '(계약 시 지정)';
+    document.querySelectorAll('#doc_place .pld-rank').forEach(e=>e.textContent = plRank);
+    document.querySelectorAll('#doc_place .pld-days').forEach(e=>e.textContent = plDays);
+    document.querySelectorAll('#doc_place .pld-amt-num').forEach(e=>e.textContent = plAmt.toLocaleString('ko-KR'));
+    $('pld_amt_kr').textContent = koreanWon(plAmt);
+    $('pld_start').textContent  = fmtYMD($('pl_start').value);
+    $('pld_end').textContent    = fmtYMD($('pl_end').value);
+    $('pld_notice').textContent = dash($('pl_notice').value);
+    $('pld_renew').textContent  = dash($('pl_renew').value);
+    $('pld_paydays').textContent= dash($('pl_paydays').value);
+    $('pld_date').textContent   = fmtDate();
+    $('pls_b_name').textContent = dash($('b_name').value);
+    $('pls_b_ceo').textContent  = dash($('b_ceo').value);
+    $('pls_b_addr').textContent = nb($('b_addr').value);
+    $('pls_g_name').textContent = dash($('g_name').value);
+    $('pls_g_ceo').textContent  = dash($('g_ceo').value);
+    $('pls_g_biz').textContent  = dash($('g_biz').value);
+    $('pls_g_addr').textContent = nb($('g_addr').value);
+    if(sp){ $('d_special_place').textContent = sp; $('special_block_place').style.display=''; }
+    else  { $('special_block_place').style.display='none'; }
+
+    // 환불 계산기 (패널 전용 · 참고용)
+    (function(){
+      const expRaw = ($('pl_calc_exposed').value||'').replace(/[^\d]/g,'');
+      if(expRaw === ''){ $('pl_calc_refund').value = ''; return; }
+      let exposed = parseInt(expRaw,10);
+      if(exposed > plDays) exposed = plDays;
+      const missed = plDays - exposed;
+      const refund = plDays > 0 ? Math.round(plAmt / plDays * missed) : 0;
+      $('pl_calc_refund').value = refund.toLocaleString('ko-KR') + '원 (미노출 ' + missed + '일)';
+    })();
+
+    /* ===== 네이버 클립(숏폼) ===== */
+    $('cld_b_name').textContent = dash($('b_name').value);
+    $('cld_b_ceo').textContent  = dash($('b_ceo').value);
+    $('cld_b_tel').textContent  = dash($('b_tel').value);
+    $('cld_b_addr').textContent = nb($('b_addr').value);
+    $('cld_g_name').textContent = dash($('g_name').value);
+    $('cld_g_ceo').textContent  = dash($('g_ceo').value);
+    $('cld_g_biz').textContent  = dash($('g_biz').value);
+    $('cld_g_tel').textContent  = dash($('g_tel').value);
+    $('cld_g_addr').textContent = nb($('g_addr').value);
+    $('cld_lead_b').textContent = dash($('b_name').value);
+    $('cld_lead_g').textContent = dash($('g_name').value);
+
+    const clipProd = (document.querySelector('input[name="clip_prod"]:checked')||{}).value || 'a';
+    ['a','b','m'].forEach(v=>{
+      const box = $('clip_opt_'+(v==='m'?'m':v));
+      if(box){ box.classList.toggle('on', clipProd===v); box.classList.toggle('off', clipProd!==v); }
+    });
+    const AMT_A = numOf('clA_amt'), AMT_B = numOf('clB_amt');
+    const AMT_MB = numOf('clM_blog_amt'), AMT_MC = numOf('clM_clip_amt');
+    const CLIP_TASKS = '<ul class="pkg-items" style="margin:5px 0 2px"><li>맞춤 주제 기획 및 슬라이드 원고 작성</li><li>숏폼 카드뉴스 제작 및 업로드 대행</li><li>검색 키워드 맞춤 제목 · 병원 태그 연결</li></ul>';
+    let scopeHtml='', feeHtml='', clipFee=0;
+    if(clipProd==='a' || clipProd==='b'){
+      const cnt  = clipProd==='a' ? '월 10건 (주 2~3회)' : '월 5건 (주 1~2회)';
+      clipFee    = clipProd==='a' ? AMT_A : AMT_B;
+      $('cld_title').textContent = '네이버 클립(숏폼) 카드뉴스 제작 대행 계약서';
+      $('cld_tag').textContent   = '숏폼 카드뉴스 제작·발행 대행 — 단독형 · ' + cnt;
+      scopeHtml = '<div class="pkg-title" style="margin-top:6px">네이버 클립(숏폼) 카드뉴스 제작 — ' + cnt + '</div>' + CLIP_TASKS
+        + (clipProd==='b' ? '<div class="pkg-note">※ 월 5건 상품은 최소 계약기간 3개월 (제4조 ②항)</div>' : '');
+      feeHtml = '<p class="li">① "갑"은 마케팅 대행비로 월 공급가액 일금 ' + koreanWon(clipFee) + '원(' + clipFee.toLocaleString('ko-KR') + '원, VAT 별도)을 지급한다.</p>'
+        + '<p class="li">② 기타 제비용은 "갑"과 "을"의 상호 협의 하에 정하기로 한다.</p>';
+      $('cld_min3').style.display = clipProd==='b' ? '' : 'none';
+    } else {
+      clipFee = AMT_MB + AMT_MC;
+      $('cld_title').textContent = '온라인 마케팅 대행 계약서';
+      $('cld_tag').textContent   = '브랜드 블로그 + 네이버 클립(숏폼) 결합 관리';
+      scopeHtml =
+        '<div class="pkg-title" style="margin-top:6px">1. 브랜드 블로그 관리 — 월 10건 (주 2~3회)</div>'
+        + '<ul class="pkg-items" style="margin:5px 0 8px"><li>의료법 준수 정보성 원고 기획 및 작성 (임상 증례 포스팅은 별도 협의)</li><li>고화질 이미지 가공·편집 및 네이버 블로그 업로드</li></ul>'
+        + '<div class="pkg-title">2. 네이버 클립(숏폼) 관리 — 월 10건 (주 2~3회)</div>'
+        + '<ul class="pkg-items" style="margin:5px 0 2px"><li>카드뉴스 기반 9:16 세로형 모션 슬라이드 영상 제작 (약 15~30초)</li><li>네이버 클립 업로드 및 스마트플레이스 장소 태그 연동</li></ul>';
+      feeHtml = '<p class="li">① "갑"은 마케팅 대행비로 월 공급가액 일금 ' + koreanWon(clipFee) + '원(' + clipFee.toLocaleString('ko-KR') + '원, VAT 별도)을 지급한다.</p>'
+        + '<table class="tbl" style="margin:8px 0"><thead><tr><th>구분</th><th style="text-align:right;width:30%">월 공급가액 (VAT 별도)</th></tr></thead><tbody>'
+        + '<tr><td>브랜드 블로그 관리 (월 10건)</td><td class="amt">' + AMT_MB.toLocaleString('ko-KR') + '원</td></tr>'
+        + '<tr><td>네이버 클립(숏폼) 관리 (월 10건)</td><td class="amt">' + AMT_MC.toLocaleString('ko-KR') + '원</td></tr>'
+        + '<tr class="sum"><td>합계</td><td class="amt">' + clipFee.toLocaleString('ko-KR') + '원 / 월</td></tr>'
+        + '</tbody></table>'
+        + '<p class="li">② 기타 제비용은 "갑"과 "을"의 상호 협의 하에 정하기로 한다.</p>';
+      $('cld_min3').style.display = 'none';
+    }
+    $('cld_scope').innerHTML = scopeHtml;
+    $('cld_fee_body').innerHTML = feeHtml;
+    $('cld_start').textContent  = fmtYMD($('cl_start').value);
+    $('cld_end').textContent    = fmtYMD($('cl_end').value);
+    $('cld_notice').textContent = dash($('cl_notice').value);
+    $('cld_renew').textContent  = dash($('cl_renew').value);
+    $('cld_date').textContent   = fmtDate();
+    $('cls_b_name').textContent = dash($('b_name').value);
+    $('cls_b_ceo').textContent  = dash($('b_ceo').value);
+    $('cls_b_addr').textContent = nb($('b_addr').value);
+    $('cls_g_name').textContent = dash($('g_name').value);
+    $('cls_g_ceo').textContent  = dash($('g_ceo').value);
+    $('cls_g_biz').textContent  = dash($('g_biz').value);
+    $('cls_g_addr').textContent = nb($('g_addr').value);
+    if(sp){ $('d_special_clip').textContent = sp; $('special_block_clip').style.display=''; }
+    else  { $('special_block_clip').style.display='none'; }
+  }
+
+  function resetForm(){
+    if(!confirm('의뢰인(을) 정보와 옵션을 비웁니다. 계속할까요?')) return;
+    ['b_name','b_ceo','b_tel','b_addr'].forEach(id=>$(id).value='');
+    $('c_special').value='';
+    hideDD();
+    $('c_date').value='';
+    // 옵션 초기 상태: 묶음 패키지 ON, 개별(월관리·포스팅·권위도) OFF
+    $('o7_chk').checked=true; syncOptUI(7);
+    [6,3,4].forEach(j=>{ $('o'+j+'_chk').checked=false; syncOptUI(j); });
+    render();
+    window.scrollTo({top:0});
+  }
+
+  /* ============ 병원 정보 저장소 (대표자 기억용) ============ */
+  const STORE_KEY = 'hanbeon_clinics_v1';
+  const SEED = {
+    '로덴성문치과의원': { ceo:'박소영', tel:'', addr:'서울특별시 도봉구 쌍문동 657' },
+    '계양가온365치과': { ceo:'최원석', tel:'032-544-2879', addr:'인천 계양구 용종동 211-1' }
+  };
+  function loadClinics(){
+    try{ const raw=localStorage.getItem(STORE_KEY); if(raw) return JSON.parse(raw); }catch(e){}
+    return {...SEED};
+  }
+  function persistClinics(obj){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(obj)); }catch(e){} }
+  let CLINICS = loadClinics();
+
+  function fillFields(name, ceo, tel, addr){
+    $('b_name').value = name || '';
+    if(ceo!==undefined)  $('b_ceo').value  = ceo  || '';
+    if(tel!==undefined)  $('b_tel').value  = tel  || '';
+    if(addr!==undefined) $('b_addr').value = addr || '';
+    render();
+  }
+
+  function saveClinic(){
+    const name = $('b_name').value.trim();
+    if(!name){ alert('상호를 먼저 입력해 주세요.'); return; }
+    CLINICS[name] = { ceo:$('b_ceo').value.trim(), tel:$('b_tel').value.trim(), addr:$('b_addr').value.trim() };
+    persistClinics(CLINICS);
+    alert(`'${name}' 병원 정보를 저장했습니다. 다음부터 상호만 입력하면 대표자까지 자동 입력됩니다.`);
+  }
+  function deleteClinic(){
+    const name = $('b_name').value.trim();
+    if(!name || !CLINICS[name]){ alert('저장된 병원이 아닙니다.'); return; }
+    if(!confirm(`'${name}' 저장 정보를 삭제할까요?`)) return;
+    delete CLINICS[name];
+    persistClinics(CLINICS);
+    alert(`'${name}' 저장 정보를 삭제했습니다.`);
+  }
+
+  /* ============ 구글 Places(신규) 장소검색 ============ */
+  const KEY_STORE = 'hanbeon_gmaps_key';
+  let gReady = false, gLoading = false, gFailMsg = '', gLib = null, gToken = null;
+  let GKEY = '', restMode = false;   // restMode: SDK가 막힌 환경(게시 페이지 등)에서 REST API로 검색
+  const esc = s => (s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+  function setStatus(t){ $('gmaps_status').innerHTML = '상태: ' + t; }
+
+  function onReadySearch(){
+    // SDK 준비 완료 시, 입력 중이던 검색어가 있으면 자동 재검색
+    const q = $('b_name').value.trim();
+    if(q.length>=2 && document.activeElement===$('b_name')) doSearch(q);
+  }
+
+  // SDK가 막힌 환경(게시 페이지의 보안 정책 등)용 REST 검색 활성화 시도
+  async function tryRestMode(){
+    if(gReady || restMode || !GKEY) return;
+    try{
+      const r = await fetch('https://places.googleapis.com/v1/places:searchText', {
+        method:'POST',
+        headers:{ 'Content-Type':'application/json', 'X-Goog-Api-Key':GKEY,
+                  'X-Goog-FieldMask':'places.displayName' },
+        body: JSON.stringify({ textQuery:'치과', languageCode:'ko', regionCode:'KR', pageSize:1 })
+      });
+      if(r.ok){
+        restMode = true; gLoading = false; gFailMsg = '';
+        setStatus('<b style="color:#1f7a4d">활성화됨</b> · 상호를 입력해 보세요');
+        onReadySearch();
+      } else {
+        const t = await r.text();
+        gLoading=false; gFailMsg='검색 API 오류('+r.status+') — 키·결제·Places API(New) 설정 확인';
+        setStatus('<b style="color:#b23">검색 API 오류</b> ('+r.status+')');
+      }
+    }catch(e){
+      gLoading=false;
+      gFailMsg='이 화면에서는 보안 정책으로 지도 검색 연결이 차단되었습니다';
+      setStatus('<b style="color:#b23">연결 차단</b> · 저장된 병원 검색만 가능');
+    }
+  }
+
+  function loadGoogle(key){
+    if(gReady || restMode) return;
+    GKEY = key;
+    gLoading = true; gFailMsg = '';
+    setStatus('지도 API 불러오는 중…');
+    window.__gmapsReady = async function(){
+      try{
+        gLib = await google.maps.importLibrary('places');
+        gToken = new gLib.AutocompleteSessionToken();
+        gReady = true; gLoading = false;
+        setStatus('<b style="color:#1f7a4d">활성화됨</b> · 상호를 입력해 보세요');
+        onReadySearch();
+      }catch(e){ tryRestMode(); }
+    };
+    const s = document.createElement('script');
+    s.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(key)}`+
+            `&v=weekly&libraries=places&language=ko&region=KR&loading=async&callback=__gmapsReady`;
+    s.async = true;
+    s.onerror = ()=>{ tryRestMode(); };                 // 스크립트 차단/실패 → REST로 전환
+    window.gm_authFailure = ()=>{ gReady=false; tryRestMode(); };
+    document.head.appendChild(s);
+    setTimeout(()=>{ if(!gReady && !restMode) tryRestMode(); }, 4000);   // 묵묵부답 대비
+  }
+  function saveGmapsKey(){
+    const k = $('gmaps_key').value.trim();
+    if(!k){ alert('구글 Maps API 키를 입력해 주세요.'); return; }
+    try{ localStorage.setItem(KEY_STORE, k); }catch(e){}
+    if(gReady){ alert('이미 활성화되어 있습니다. 새 키를 적용하려면 페이지를 새로고침하세요.'); return; }
+    loadGoogle(k);
+  }
+
+  /* ---- 통합 자동완성 드롭다운 ---- */
+  const dd = $('clinic_dd');
+  let ddTimer = null;
+  let curPredictions = [];   // 구글 예측 결과 보관 (클릭 시 상세 조회용)
+  function hideDD(){ dd.classList.remove('show'); dd.innerHTML=''; }
+
+  function renderDD(savedMatches, predictions){
+    let html = '';
+    if(savedMatches.length){
+      html += '<div class="hd">저장된 병원 (대표자 포함)</div>';
+      savedMatches.forEach(n=>{
+        const c = CLINICS[n];
+        html += `<div class="it" data-type="saved" data-name="${esc(n)}">
+          <div class="nm">${esc(n)}<span class="tag">저장됨</span></div>
+          <div class="ad">${esc(c.addr||'')}</div>
+          ${c.tel?`<div class="ph">${esc(c.tel)}</div>`:''}</div>`;
+      });
+    }
+    if(predictions && predictions.length){
+      html += '<div class="hd">지도 검색 결과 (선택 시 주소·전화 자동)</div>';
+      predictions.forEach((p,i)=>{
+        html += `<div class="it" data-type="place" data-idx="${i}">
+          <div class="nm">${esc(p.main)}</div>
+          <div class="ad">${esc(p.secondary)}</div>
+          ${p.tel?`<div class="ph">${esc(p.tel)}</div>`:''}</div>`;
+      });
+    }
+    if(!html){
+      if(gReady || restMode) html = '<div class="empty">검색 결과가 없습니다.</div>';
+      else if(gLoading) html = '<div class="empty">⏳ 지도 검색 준비 중입니다… 1~2초 후 자동으로 검색됩니다.</div>';
+      else if(gFailMsg) html = '<div class="empty">⚠ '+gFailMsg+' (⚙ 설정의 상태 참고)</div>';
+      else html = '<div class="empty">지도 검색이 꺼져 있습니다. ⚙ 설정에서 상태를 확인하세요. (저장된 병원은 키 없이도 검색됩니다)</div>';
+    }
+    dd.innerHTML = html;
+    dd.classList.add('show');
+    dd.querySelectorAll('.it').forEach(el=>{
+      el.addEventListener('mousedown', async ev=>{   // mousedown: blur보다 먼저
+        ev.preventDefault();
+        if(el.dataset.type==='saved'){
+          const name=el.dataset.name, c=CLINICS[name];
+          fillFields(name, c.ceo, c.tel, c.addr); hideDD(); return;
+        }
+        // 구글 예측 선택 → 상세 필드 조회
+        const pred = curPredictions[+el.dataset.idx];
+        hideDD();
+        if(pred.rest){   // REST 결과는 이미 주소·전화 포함
+          fillFields(pred.main, undefined, pred.tel||'', pred.secondary||'');
+          return;
+        }
+        try{
+          const place = pred.prediction.toPlace();
+          await place.fetchFields({ fields:['displayName','formattedAddress','nationalPhoneNumber'] });
+          fillFields(
+            place.displayName || pred.main,
+            undefined,                                   // 대표자는 유지(검색 불가)
+            place.nationalPhoneNumber || '',
+            place.formattedAddress || pred.secondary
+          );
+          gToken = new gLib.AutocompleteSessionToken();  // 세션 갱신
+        }catch(e){
+          fillFields(pred.main, undefined, '', pred.secondary);
+        }
+      });
+    });
+  }
+
+  async function doSearch(q){
+    const savedMatches = Object.keys(CLINICS).filter(n=>n.includes(q)).sort((a,b)=>a.localeCompare(b,'ko'));
+    curPredictions = [];
+    if(gReady && gLib){
+      try{
+        const req = { input:q, includedRegionCodes:['kr'], language:'ko', sessionToken:gToken };
+        const { suggestions } = await gLib.AutocompleteSuggestion.fetchAutocompleteSuggestions(req);
+        curPredictions = (suggestions||[]).slice(0,8).map(s=>{
+          const pp = s.placePrediction;
+          return {
+            prediction: pp,
+            main: pp.mainText ? pp.mainText.toString() : pp.text.toString(),
+            secondary: pp.secondaryText ? pp.secondaryText.toString() : ''
+          };
+        });
+      }catch(e){ curPredictions = []; }
+    } else if(restMode && GKEY){
+      // REST 검색: 이름·주소·전화까지 한 번에
+      try{
+        const r = await fetch('https://places.googleapis.com/v1/places:searchText', {
+          method:'POST',
+          headers:{ 'Content-Type':'application/json', 'X-Goog-Api-Key':GKEY,
+                    'X-Goog-FieldMask':'places.displayName,places.formattedAddress,places.nationalPhoneNumber' },
+          body: JSON.stringify({ textQuery:q, languageCode:'ko', regionCode:'KR', pageSize:8 })
+        });
+        if(r.ok){
+          const data = await r.json();
+          curPredictions = (data.places||[]).map(p=>({
+            rest: true,
+            main: (p.displayName && p.displayName.text) || '',
+            secondary: p.formattedAddress || '',
+            tel: p.nationalPhoneNumber || ''
+          })).filter(p=>p.main);
+        }
+      }catch(e){ curPredictions = []; }
+    }
+    if(($('b_name').value||'').trim() !== q) return;   // 입력이 바뀌었으면 무시
+    renderDD(savedMatches, curPredictions);
+  }
+
+  $('b_name').addEventListener('input', e=>{
+    const q = e.target.value.trim();
+    clearTimeout(ddTimer);
+    if(q.length<2){ hideDD(); render(); return; }
+    if(CLINICS[q]){ const c=CLINICS[q]; $('b_ceo').value=c.ceo||$('b_ceo').value; }
+    ddTimer = setTimeout(()=>doSearch(q), 280);
+    render();
+  });
+  $('b_name').addEventListener('focus', e=>{
+    const q=e.target.value.trim(); if(q.length>=2) doSearch(q);
+  });
+  $('b_name').addEventListener('blur', ()=> setTimeout(hideDD, 180));
+
+  // 기본 내장 키 — 파일을 열면 바로 검색 활성화. (⚙ 설정에서 다른 키를 저장하면 그 키가 우선)
+  const DEFAULT_GMAPS_KEY = ['AIza','SyDizk','1eqZoLmoK','-s-l80PEj','Tbwtn6GLYDc'].join('');
+  (function(){
+    let k=''; try{ k=localStorage.getItem(KEY_STORE)||''; }catch(e){}
+    if(!k) k = DEFAULT_GMAPS_KEY;
+    if(k){ $('gmaps_key').value=k; loadGoogle(k); } else { setStatus('미설정'); }
+  })();
+
+  // 블로그 계약 시작일 변경 → 종료일 자동 +1년 −1일
+  $('bl_start').addEventListener('change', ()=>{
+    const v=$('bl_start').value; if(!v) return;
+    const e=new Date(v+'T00:00:00'); e.setFullYear(e.getFullYear()+1); e.setDate(e.getDate()-1);
+    $('bl_end').value = e.toISOString().slice(0,10);
+    render();
+  });
+
+  // 플레이스 시작일 변경 → 종료일 자동 +1년 −1일
+  $('pl_start').addEventListener('change', ()=>{
+    const v=$('pl_start').value; if(!v) return;
+    const e=new Date(v+'T00:00:00'); e.setFullYear(e.getFullYear()+1); e.setDate(e.getDate()-1);
+    $('pl_end').value = e.toISOString().slice(0,10);
+    render();
+  });
+  // 클립 시작일 변경 → 종료일 자동 +6개월 −1일
+  $('cl_start').addEventListener('change', ()=>{
+    const v=$('cl_start').value; if(!v) return;
+    const e=new Date(v+'T00:00:00'); e.setMonth(e.getMonth()+6); e.setDate(e.getDate()-1);
+    $('cl_end').value = e.toISOString().slice(0,10);
+    render();
+  });
+
+  // 초기 계약일 = 오늘 (+ 블로그·플레이스 1년, 클립 6개월)
+  (function(){
+    const t=new Date();
+    const today=t.toISOString().slice(0,10);
+    $('c_date').value = today;
+    $('bl_start').value = today;
+    $('pl_start').value = today;
+    $('cl_start').value = today;
+    const e=new Date(t); e.setFullYear(e.getFullYear()+1); e.setDate(e.getDate()-1);
+    $('bl_end').value = e.toISOString().slice(0,10);
+    $('pl_end').value = e.toISOString().slice(0,10);
+    const e6=new Date(t); e6.setMonth(e6.getMonth()+6); e6.setDate(e6.getDate()-1);
+    $('cl_end').value = e6.toISOString().slice(0,10);
+  })();
+  render();
+</script>
+</body>
+</html>
