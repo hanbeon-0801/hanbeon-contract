@@ -254,7 +254,7 @@
 
     <!-- 공급사 -->
     <div class="group">
-      <h3 id="h_g">공급사 (갑)</h3>
+      <h3 id="h_g">공급사 (을)</h3>
       <div class="row2">
         <div class="field"><label>상호</label><input id="g_name" value="한번"></div>
         <div class="field"><label>대표자</label><input id="g_ceo" value="김성민"></div>
@@ -268,7 +268,7 @@
 
     <!-- 의뢰인 -->
     <div class="group">
-      <h3 id="h_b">의뢰인 (을)</h3>
+      <h3 id="h_b">의뢰인 (갑)</h3>
 
       <div class="field" style="position:relative">
         <label>상호 <span style="color:var(--muted);font-size:11px">(입력하면 지도에서 자동 검색 →주소·전화 채움)</span></label>
@@ -504,7 +504,16 @@
 
       <div class="parties">
         <div class="party">
-          <div class="ph">갑 (공급사)</div>
+          <div class="ph">갑 (의뢰인)</div>
+          <div class="pb">
+            <div class="pr"><span class="pk">상호</span><span class="pv" id="d_b_name"></span></div>
+            <div class="pr"><span class="pk">대표자</span><span class="pv" id="d_b_ceo"></span></div>
+            <div class="pr"><span class="pk">대표연락처</span><span class="pv" id="d_b_tel"></span></div>
+            <div class="pr"><span class="pk">주소</span><span class="pv" id="d_b_addr"></span></div>
+          </div>
+        </div>
+        <div class="party">
+          <div class="ph">을 (공급사)</div>
           <div class="pb">
             <div class="pr"><span class="pk">상호</span><span class="pv" id="d_g_name"></span></div>
             <div class="pr"><span class="pk">대표자</span><span class="pv" id="d_g_ceo"></span></div>
@@ -513,27 +522,18 @@
             <div class="pr"><span class="pk">주소</span><span class="pv" id="d_g_addr"></span></div>
           </div>
         </div>
-        <div class="party">
-          <div class="ph">을 (의뢰인)</div>
-          <div class="pb">
-            <div class="pr"><span class="pk">상호</span><span class="pv" id="d_b_name"></span></div>
-            <div class="pr"><span class="pk">대표자</span><span class="pv" id="d_b_ceo"></span></div>
-            <div class="pr"><span class="pk">대표연락처</span><span class="pv" id="d_b_tel"></span></div>
-            <div class="pr"><span class="pk">주소</span><span class="pv" id="d_b_addr"></span></div>
-          </div>
-        </div>
       </div>
 
-      <p class="lead">갑과 을은 홈페이지 제작 및 검색최적화(SEO·AEO·GEO) 서비스 제공에 관하여 다음과 같이 계약을 체결한다.</p>
+      <p class="lead">갑(의뢰인)과 을(공급사)은 홈페이지 제작 및 검색최적화(SEO·AEO·GEO) 서비스 제공에 관하여 다음과 같이 계약을 체결한다.</p>
 
       <div class="art">
         <h2>제1조 (계약의 목적)</h2>
-        <p>본 계약은 갑이 을의 치과의원을 위한 홈페이지 제작 및 SEO(검색엔진최적화)·AEO(답변엔진최적화)·GEO(생성형AI최적화) 서비스를 제공하고, 을이 이에 대한 대가를 지급하는 것을 목적으로 한다.</p>
+        <p>본 계약은 을이 갑의 치과의원을 위한 홈페이지 제작 및 SEO(검색엔진최적화)·AEO(답변엔진최적화)·GEO(생성형AI최적화) 서비스를 제공하고, 갑이 이에 대한 대가를 지급하는 것을 목적으로 한다.</p>
       </div>
 
       <div class="art">
         <h2>제2조 (용역의 범위)</h2>
-        <p>① 기본 패키지 — 아래 항목을 일괄 제공한다.</p>
+        <p>① 기본 패키지 — 을은 아래 항목을 일괄 제공한다.</p>
         <table class="tbl">
           <thead><tr><th style="width:24%">항목</th><th>제공 내용</th><th style="width:16%;text-align:right">금액</th></tr></thead>
           <tbody>
@@ -546,7 +546,7 @@
             <tr class="sum"><td colspan="2">기본 패키지 초기 구축 합계 (1회성·부가세 별도)</td><td class="amt" id="d_pkg_sum"></td></tr>
           </tbody>
         </table>
-        <p>② 추가 옵션 — 을이 선택한 항목에 한하여 추가 계약한다.</p>
+        <p>② 추가 옵션 — 갑이 선택한 항목에 한하여 추가 계약한다.</p>
         <table class="tbl"><tbody id="d_opt_body"></tbody></table>
       </div>
 
@@ -568,30 +568,30 @@
 
       <div class="art">
         <h2>제4조 (납품 기간 및 일정)</h2>
-        <p class="li">① 갑은 계약금 입금 확인 후 <b id="d_period"></b> 이내에 홈페이지를 납품한다.</p>
-        <p class="li">② 을의 콘텐츠(사진, 텍스트 등) 미제공 또는 피드백 지연 시 납품 기간은 그에 상응하여 연장될 수 있다.</p>
-        <p class="li">③ 납품 후 7일 이내 을의 검수 의견을 수렴하며, 의견이 없을 경우 검수 완료로 간주한다.</p>
+        <p class="li">① 을은 계약금 입금 확인 후 <b id="d_period"></b> 이내에 홈페이지를 납품한다.</p>
+        <p class="li">② 갑의 콘텐츠(사진, 텍스트 등) 미제공 또는 피드백 지연 시 납품 기간은 그에 상응하여 연장될 수 있다.</p>
+        <p class="li">③ 납품 후 7일 이내 갑의 검수 의견을 수렴하며, 의견이 없을 경우 검수 완료로 간주한다.</p>
       </div>
 
       <div class="art">
         <h2>제5조 (무상 수정 및 하자 보수)</h2>
-        <p class="li">① 갑은 최종 납품일로부터 3개월 동안 기술적 하자에 대한 무상 수정을 제공한다.</p>
-        <p class="li">② 무상 수정 범위는 갑의 귀책에 의한 오류·버그로 한정하며, 을의 요청에 의한 디자인·내용 변경은 유상으로 처리한다.</p>
+        <p class="li">① 을은 최종 납품일로부터 3개월 동안 기술적 하자에 대한 무상 수정을 제공한다.</p>
+        <p class="li">② 무상 수정 범위는 을의 귀책에 의한 오류·버그로 한정하며, 갑의 요청에 의한 디자인·내용 변경은 유상으로 처리한다.</p>
         <p class="li">③ 무상 수정 기간 종료 후에는 별도 유지관리 계약에 따른다.</p>
       </div>
 
       <div class="art">
         <h2>제6조 (지식재산권)</h2>
-        <p class="li">① 납품 완료 및 잔금 수령 후 홈페이지의 저작권은 을에게 이전된다.</p>
-        <p class="li">② 갑이 개발한 공통 모듈·프레임워크·라이브러리의 저작권은 갑에게 귀속되며, 을은 해당 홈페이지 내에서만 사용할 수 있다.</p>
-        <p class="li">③ 을이 제공한 사진·텍스트 등 콘텐츠의 저작권은 을에게 귀속된다.</p>
+        <p class="li">① 납품 완료 및 잔금 수령 후 홈페이지의 저작권은 갑에게 이전된다.</p>
+        <p class="li">② 을이 개발한 공통 모듈·프레임워크·라이브러리의 저작권은 을에게 귀속되며, 갑은 해당 홈페이지 내에서만 사용할 수 있다.</p>
+        <p class="li">③ 갑이 제공한 사진·텍스트 등 콘텐츠의 저작권은 갑에게 귀속된다.</p>
       </div>
 
       <div class="art">
         <h2>제7조 (계약 해지 및 환불)</h2>
-        <p class="li">① 을이 계약 체결 후 작업 착수 전 해지 시 계약금의 50%를 위약금으로 공제 후 반환한다.</p>
-        <p class="li">② 작업 착수 후 을의 귀책으로 계약 해지 시 이미 진행된 작업 비용을 산정하여 정산하고, 계약금을 초과하는 경우 을이 추가 부담한다.</p>
-        <p class="li">③ 갑의 귀책으로 계약 이행이 불가한 경우 수령한 금액 전액을 을에게 반환한다.</p>
+        <p class="li">① 갑이 계약 체결 후 작업 착수 전 해지 시 계약금의 50%를 위약금으로 공제 후 반환한다.</p>
+        <p class="li">② 작업 착수 후 갑의 귀책으로 계약 해지 시 이미 진행된 작업 비용을 산정하여 정산하고, 계약금을 초과하는 경우 갑이 추가 부담한다.</p>
+        <p class="li">③ 을의 귀책으로 계약 이행이 불가한 경우 수령한 금액 전액을 갑에게 반환한다.</p>
       </div>
 
       <div class="art">
@@ -601,7 +601,7 @@
 
       <div class="art">
         <h2>제9조 (분쟁 해결)</h2>
-        <p>본 계약과 관련한 분쟁은 당사자 간 협의를 우선으로 하며, 협의 불성립 시 갑의 소재지를 관할하는 법원을 합의 관할법원으로 한다.</p>
+        <p>본 계약과 관련한 분쟁은 당사자 간 협의를 우선으로 하며, 협의 불성립 시 을의 소재지를 관할하는 법원을 합의 관할법원으로 한다.</p>
       </div>
 
       <div class="art">
@@ -618,18 +618,18 @@
       <div class="sign">
         <div class="date" id="d_date"></div>
         <div class="sb">
-          <div class="sh">갑 (공급사)</div>
+          <div class="sh">갑 (의뢰인)</div>
+          <div class="sr"><span class="sk">상호</span><span id="s_b_name"></span></div>
+          <div class="sr"><span class="sk">대표자</span><span id="s_b_ceo"></span></div>
+          <div class="sr"><span class="sk">주소</span><span id="s_b_addr"></span></div>
+          <div class="seal"><span>서명 또는 날인</span><span class="box">印</span></div>
+        </div>
+        <div class="sb">
+          <div class="sh">을 (공급사)</div>
           <div class="sr"><span class="sk">상호</span><span id="s_g_name"></span></div>
           <div class="sr"><span class="sk">대표자</span><span id="s_g_ceo"></span></div>
           <div class="sr"><span class="sk">사업자번호</span><span id="s_g_biz"></span></div>
           <div class="sr"><span class="sk">주소</span><span id="s_g_addr"></span></div>
-          <div class="seal"><span>서명 또는 날인</span><span class="box">印</span></div>
-        </div>
-        <div class="sb">
-          <div class="sh">을 (의뢰인)</div>
-          <div class="sr"><span class="sk">상호</span><span id="s_b_name"></span></div>
-          <div class="sr"><span class="sk">대표자</span><span id="s_b_ceo"></span></div>
-          <div class="sr"><span class="sk">주소</span><span id="s_b_addr"></span></div>
           <div class="seal"><span>서명 또는 날인</span><span class="box">印</span></div>
         </div>
       </div>
@@ -1443,8 +1443,8 @@
       $(MODE_DOC[k]).style.display = m===k ? '' : 'none';
       $('tab_'+k).classList.toggle('on', m===k);
     });
-    $('h_g').textContent = m==='home' ? '공급사 (갑)' : '대행사 (을)';
-    $('h_b').textContent = m==='home' ? '의뢰인 (을)' : '의뢰자 (갑)';
+    $('h_g').textContent = m==='home' ? '공급사 (을)' : '대행사 (을)';
+    $('h_b').textContent = m==='home' ? '의뢰인 (갑)' : '의뢰자 (갑)';
     $('brand_sub').textContent = MODE_SUB[m];
     render();
   }
