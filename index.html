@@ -249,6 +249,7 @@
         <button type="button" id="tab_blog" class="ct" onclick="setMode('blog')">✍ 블로그</button>
         <button type="button" id="tab_place" class="ct" onclick="setMode('place')">📍 플레이스 보장형</button>
         <button type="button" id="tab_clip" class="ct" onclick="setMode('clip')">🎬 네이버 클립</button>
+        <button type="button" id="tab_insta" class="ct" onclick="setMode('insta')">📷 인스타그램</button>
       </div>
     </div>
 
@@ -469,6 +470,43 @@
         <div class="field"><label>갱신거절 통지 (개월)</label><input id="cl_notice" value="1"></div>
         <div class="field"><label>자동연장 단위 (개월)</label><input id="cl_renew" value="6"></div>
       </div>
+    </div>
+
+    <!-- 인스타그램 계약 조건 (인스타 모드) -->
+    <div class="group mode-insta" style="display:none">
+      <h3>인스타그램 상품 선택</h3>
+
+      <div class="opt on" id="insta_opt_a">
+        <div class="top"><input type="radio" name="insta_prod" id="ip_a" value="a" checked style="width:17px;height:17px;accent-color:var(--accent);cursor:pointer"><label for="ip_a" style="cursor:pointer;flex:1;font-weight:600;font-size:13px">인스타 단독 · 월 10회 <span style="color:var(--accent-2);font-size:11px">(주 2~3회)</span></label></div>
+        <div class="amount-row" style="margin-bottom:0"><span class="nm">월 공급가액</span><span class="won-wrap"><input class="amtnum" id="inA_amt" value="450000"></span></div>
+      </div>
+
+      <div class="opt off" id="insta_opt_b">
+        <div class="top"><input type="radio" name="insta_prod" id="ip_b" value="b" style="width:17px;height:17px;accent-color:var(--accent);cursor:pointer"><label for="ip_b" style="cursor:pointer;flex:1;font-weight:600;font-size:13px">인스타 단독 · 월 5회 <span style="color:var(--accent-2);font-size:11px">(주 1~2회 · 최소 3개월)</span></label></div>
+        <div class="amount-row" style="margin-bottom:0"><span class="nm">월 공급가액</span><span class="won-wrap"><input class="amtnum" id="inB_amt" value="300000"></span></div>
+      </div>
+
+      <div class="opt off" id="insta_opt_m">
+        <div class="top"><input type="radio" name="insta_prod" id="ip_m" value="m" style="width:17px;height:17px;accent-color:var(--accent);cursor:pointer"><label for="ip_m" style="cursor:pointer;flex:1;font-weight:600;font-size:13px">혼합형 · 블로그 월 10건 + 인스타 월 10회</label></div>
+        <div class="amount-row"><span class="nm">브랜드 블로그 관리 (월)</span><span class="won-wrap"><input class="amtnum" id="inM_blog_amt" value="600000"></span></div>
+        <div class="amount-row" style="margin-bottom:0"><span class="nm">인스타그램 관리 (월)</span><span class="won-wrap"><input class="amtnum" id="inM_insta_amt" value="300000"></span></div>
+        <p class="hint" style="text-align:left;margin-top:6px">블로그 원고를 재활용해 인스타 기획비가 빠진 금액입니다 (기본 900,000원/월 · VAT 별도).</p>
+      </div>
+
+      <div class="opt off" id="insta_opt_s">
+        <div class="top"><input type="radio" name="insta_prod" id="ip_s" value="s" style="width:17px;height:17px;accent-color:var(--accent);cursor:pointer"><label for="ip_s" style="cursor:pointer;flex:1;font-weight:600;font-size:13px">시드 트래픽 · 월 10회 고정 <span style="color:var(--accent-2);font-size:11px">(병원 직접 운영 계정)</span></label></div>
+        <div class="amount-row" style="margin-bottom:0"><span class="nm">월 공급가액</span><span class="won-wrap"><input class="amtnum" id="inS_amt" value="150000"></span></div>
+      </div>
+
+      <div class="row2" style="margin-top:12px">
+        <div class="field"><label>계약 시작일</label><input id="in_start" type="date"></div>
+        <div class="field"><label>계약 종료일 <span style="color:var(--muted);font-size:11px">(시작일 선택 시 +6개월)</span></label><input id="in_end" type="date"></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>갱신거절 통지 (개월)</label><input id="in_notice" value="1"></div>
+        <div class="field"><label>자동연장 단위 (개월)</label><input id="in_renew" value="6"></div>
+      </div>
+      <p class="hint" style="text-align:left;margin-top:8px">부스팅 수치(조회수 700~1,000 · 좋아요 50~80 · 댓글 3~5)는 게시물 1건 기준 세팅값이며, 계약서에 "노출 결과 보장 아님"이 자동 명시됩니다.</p>
     </div>
 
     <!-- 계약일 -->
@@ -1083,6 +1121,154 @@
         </div>
       </div>
     </article>
+
+    <!-- ============ 인스타그램 카드뉴스 계약서 ============ -->
+    <article class="doc" id="doc_insta" style="display:none">
+      <div class="y">CONTRACT 2026</div>
+      <h1 id="ind_title">인스타그램 카드뉴스 제작 대행 계약서</h1>
+      <div class="tagline" id="ind_tag">인스타그램 카드뉴스 제작·운영 대행</div>
+
+      <div class="parties">
+        <div class="party">
+          <div class="ph">갑 (의뢰자)</div>
+          <div class="pb">
+            <div class="pr"><span class="pk">상호</span><span class="pv" id="ind_b_name"></span></div>
+            <div class="pr"><span class="pk">대표자</span><span class="pv" id="ind_b_ceo"></span></div>
+            <div class="pr"><span class="pk">대표연락처</span><span class="pv" id="ind_b_tel"></span></div>
+            <div class="pr"><span class="pk">주소</span><span class="pv" id="ind_b_addr"></span></div>
+          </div>
+        </div>
+        <div class="party">
+          <div class="ph">을 (대행사)</div>
+          <div class="pb">
+            <div class="pr"><span class="pk">상호</span><span class="pv" id="ind_g_name"></span></div>
+            <div class="pr"><span class="pk">대표자</span><span class="pv" id="ind_g_ceo"></span></div>
+            <div class="pr"><span class="pk">사업자번호</span><span class="pv" id="ind_g_biz"></span></div>
+            <div class="pr"><span class="pk">연락처</span><span class="pv" id="ind_g_tel"></span></div>
+            <div class="pr"><span class="pk">주소</span><span class="pv" id="ind_g_addr"></span></div>
+          </div>
+        </div>
+      </div>
+
+      <p class="lead">마케팅 대행 의뢰자 <b id="ind_lead_b"></b>(이하 "갑"이라 한다) 및 대행사 <b id="ind_lead_g"></b>(이하 "을"이라 한다)는 "갑"의 온라인 마케팅 대행(이하 "서비스"라 한다)을 위하여 포괄적인 상호 협력 관계를 맺기로 합의하여 다음과 같이 계약을 체결한다.</p>
+
+      <div class="art">
+        <h2>제1조 (계약의 목적)</h2>
+        <p>본 계약은 "갑"과 "을" 간의 업무 제휴를 체결함에 따른 권리와 의무 및 필요한 제반사항을 규정하는데 그 목적이 있다.</p>
+      </div>
+
+      <div class="art">
+        <h2>제2조 (서비스의 정의)</h2>
+        <p>"을"이 "갑"에게 제공하는 "서비스"는 계약서 제3조 범위 안에서 이루어진다.</p>
+      </div>
+
+      <div class="art">
+        <h2>제3조 (서비스의 범위)</h2>
+        <p>"을"이 수행할 "서비스"의 범위는 다음과 같으며, "을"은 동 "서비스"의 수행 시 "서비스"의 구체적인 방안에 관하여 사전에 "갑"의 승인을 받아야 한다.</p>
+        <div id="ind_scope"></div>
+      </div>
+
+      <div class="art">
+        <h2>제4조 (계약 일반)</h2>
+        <p class="li">① 계약기간 — "서비스" 계약의 유효 기간은 <b id="ind_start"></b>부터 <b id="ind_end"></b>까지로 한다. 단, 계약기간 만료일 (<b id="ind_notice"></b>)개월 전까지 당사자 일방이 상대방에 대하여 서면으로 갱신거절의 의사를 통지하거나 계약내용의 변경을 요청하지 아니하면, 본 계약은 계약만료 익일부터 (<b id="ind_renew"></b>)개월씩 동일 조건으로 자동 연장된다.</p>
+        <p class="li" id="ind_min3" style="display:none">② 월 5회 상품의 최소 계약기간은 3개월로 한다.</p>
+      </div>
+
+      <div class="art">
+        <h2>제5조 (마케팅 대행비)</h2>
+        <div id="ind_fee_body"></div>
+      </div>
+
+      <div class="art">
+        <h2>제6조 (마케팅 대행비의 청구 및 지급)</h2>
+        <p class="li">① 본 "서비스"는 선결제 방식을 원칙으로 하며, "갑"은 매월 업무 개시일 전일까지 "을"이 지정한 계좌로 입금 또는 카드 결제를 완료한다.</p>
+        <p class="li">② 기타 제비용은 "갑"과 "을"의 상호 협의 하에 정하기로 한다.</p>
+      </div>
+
+      <div class="art">
+        <h2>제7조 (제작물의 귀속 및 책임)</h2>
+        <p class="li">① "갑"이 비용을 지불 또는 사용을 위해서 인수한 모든 제작물(미완성 제작물 및 시안 포함, 이하 "갑의 제작물"이라 한다), 자료, 정보 및 그에 속한 모든 권리는 관련 법령이 허용하는 범위 내에서 "갑"이 소유하며, "을"은 타업체에게 "갑의 제작물"을 제공하지 않는다.</p>
+        <p class="li">② 본 계약에 따라 "을"이 행한 업무에 대하여 최종 결정권자는 "갑"으로서 모든 결정에 대한 책임은 전적으로 "갑"이 부담한다.</p>
+        <p class="li">③ 제2항에도 불구하고 "을"이 명백히 고의로 허위의 자료를 근거로 제작된 제작물의 경우에는 "을"이 그에 대한 책임을 진다.</p>
+      </div>
+
+      <div class="art">
+        <h2>제8조 (계약의 양도)</h2>
+        <p>"을"은 "갑"의 서면승인 없이 본 계약의 권리 및 의무의 일부 또는 전부를 제3자에게 양도ㆍ이전하거나 담보물로 제공할 수 없다.</p>
+      </div>
+
+      <div class="art">
+        <h2>제9조 (계약의 해지)</h2>
+        <p class="li">① 계약 상대방(이하 "귀책당사자"라 한다)에게 다음 각호에 해당하는 사유가 발생할 경우 "갑" 또는 "을"(이하 "해지권자"라 한다)은 "귀책당사자"에게 그 사유를 통지하고 본 계약을 해지할 수 있으며, 이의 효력은 서면 통지 즉시 발생하는 것으로 한다.</p>
+        <p class="li" style="padding-left:28px;text-indent:-12px">1. "귀책당사자"가 본 계약을 위반하여 "해지권자"가 10일 이상의 기간을 정하여 이행을 최고하여도 이를 시정하지 않는 경우</p>
+        <p class="li" style="padding-left:28px;text-indent:-12px">2. "귀책당사자"에게 발행 수표, 어음 등의 지급거절 또는 부도가 발생한 경우나 파산, 회사정리, 화의, 워크아웃 기타 이와 유사한 절차의 신청이 있는 경우</p>
+        <p class="li" style="padding-left:28px;text-indent:-12px">3. "해지권자"의 사전 서면 승인 없이 "귀책당사자"가 본 계약상의 권리, 의무 등을 제3자에게 양도하였을 경우</p>
+        <p class="li">② 본 계약상 목적을 달성하는 것이 현저히 불가능하여 본 계약의 해지를 양당사자가 서면으로 동의할 경우, 본 계약은 해지된다.</p>
+      </div>
+
+      <div class="art">
+        <h2>제10조 (자료제공 및 기밀 유지)</h2>
+        <p class="li">① "갑" 또는 "을"은 본 계약기간 중 본 계약의 체결 또는 이행과 관련하여 알게 된 상대방의 영업비밀, 기술정보, 자료(이하 "비밀등"이라 한다)를 본 계약의 이행을 위해서만 사용하여야 하고, 계약기간 종료와 동시에 상대방에게 모든 "비밀등"을 반환하여야 한다.</p>
+        <p class="li">② "갑" 또는 "을"은 본 계약기간은 물론 종료 후에도 상대방이 제공한 "비밀등"을 상대방의 사전 서면 승낙 없이 제3자에게 누설ㆍ공개하여서는 아니되며, 외부유출로 야기되는 민형사상 일체의 책임은 유출한 측이 진다.</p>
+        <p class="li">③ "갑" 또는 "을"은 그 임직원, 관련자로 하여금 위 각항과 동일한 의무를 부담하도록 하여야 한다.</p>
+      </div>
+
+      <div class="art">
+        <h2>제11조 (신의성실의 의무)</h2>
+        <p>"갑" 또는 "을"은 본 계약의 목적 달성을 위해 신의성실의 원칙에 따라서 상호관련 업무에 협력한다.</p>
+      </div>
+
+      <div class="art">
+        <h2>제12조 (손해 배상)</h2>
+        <p>본 계약이 해지되거나 당사자 일방이 본 계약을 위반하는 경우, 귀책사유 있는 당사자는 이로 인하여 상대방에게 발생하는 모든 손해를 배상하여야 한다.</p>
+      </div>
+
+      <div class="art">
+        <h2>제13조 (불가항력)</h2>
+        <p>천재지변, 전쟁, 내란, 폭동, 정부규제 또는 사회통념상 이에 준하는 당사자 일방이 책임질 수 없는 사유(노사분규 제외)로 인하여 그 일방이 본 계약상의 의무를 이행하지 못하는 경우에는 그 책임을 면한다.</p>
+      </div>
+
+      <div class="art">
+        <h2>제14조 (소송의 합의 관할)</h2>
+        <p>본 계약 이행에 있어 "갑", "을" 간에 분쟁이 발생할 경우에는 주소지 관할 법원을 전속적 합의 관할 법원으로 하여 일체의 분쟁을 해결한다.</p>
+      </div>
+
+      <div class="art">
+        <h2>제15조 (효력 및 해석)</h2>
+        <p>본 계약의 효력은 계약일로부터 발효하고, 계약서에 정한 사항 이외의 것에 대해서는 일반적인 상관습에 준한다.</p>
+      </div>
+
+      <div class="art">
+        <h2>제16조 (계약서의 보완)</h2>
+        <p>본 계약서의 세부적인 이행사항에 관하여 내용 보완이 필요한 경우 "갑", "을"은 상호 협의하여 결정한다.</p>
+      </div>
+
+      <div class="art" id="special_block_insta" style="display:none">
+        <h2>제17조 (특약사항)</h2>
+        <div id="d_special_insta" class="special-body"></div>
+      </div>
+
+      <p class="lead" style="margin-top:22px">본 계약의 체결을 증명하기 위하여 본 계약서를 이(2)부 작성, 날인 후 "갑", "을"이 각각 일(1)부씩 보관한다.</p>
+
+      <div class="sign">
+        <div class="date" id="ind_date"></div>
+        <div class="sb">
+          <div class="sh">갑 (의뢰자)</div>
+          <div class="sr"><span class="sk">상호</span><span id="ins_b_name"></span></div>
+          <div class="sr"><span class="sk">대표자</span><span id="ins_b_ceo"></span></div>
+          <div class="sr"><span class="sk">주소</span><span id="ins_b_addr"></span></div>
+          <div class="seal"><span>서명 또는 날인</span><span class="box">印</span></div>
+        </div>
+        <div class="sb">
+          <div class="sh">을 (대행사)</div>
+          <div class="sr"><span class="sk">상호</span><span id="ins_g_name"></span></div>
+          <div class="sr"><span class="sk">대표자</span><span id="ins_g_ceo"></span></div>
+          <div class="sr"><span class="sk">사업자번호</span><span id="ins_g_biz"></span></div>
+          <div class="sr"><span class="sk">주소</span><span id="ins_g_addr"></span></div>
+          <div class="seal"><span>서명 또는 날인</span><span class="box">印</span></div>
+        </div>
+      </div>
+    </article>
   </main>
 </div>
 
@@ -1306,6 +1492,10 @@
       const cp = (document.querySelector('input[name="clip_prod"]:checked')||{}).value || 'a';
       base = (cp==='m' ? '한번_블로그·클립 결합_계약서_' : '한번_네이버클립_계약서_') + clinic;
     }
+    else if(m==='insta'){
+      const ip = (document.querySelector('input[name="insta_prod"]:checked')||{}).value || 'a';
+      base = (ip==='m' ? '한번_블로그·인스타 결합_계약서_' : (ip==='s' ? '한번_인스타 시드트래픽_계약서_' : '한번_인스타그램_계약서_')) + clinic;
+    }
     else base = '한번_홈페이지_ai노출 최적화 계약서_' + clinic;
     pdfName = base.replace(/[\\\/:*?"<>|]/g,'') + '.pdf';
     const btn = $('pdf_btn'); const orig = btn.textContent;
@@ -1429,16 +1619,17 @@
 
   /* ============ 계약서 유형 전환 ============ */
   let MODE='home';
-  const MODE_DOC = { home:'doc', blog:'doc_blog', place:'doc_place', clip:'doc_clip' };
+  const MODE_DOC = { home:'doc', blog:'doc_blog', place:'doc_place', clip:'doc_clip', insta:'doc_insta' };
   const MODE_SUB = {
     home:  '홈페이지 제작 · SEO·AEO·GEO 통합 계약서',
     blog:  '네이버 블로그 마케팅 대행 계약서',
     place: '네이버 플레이스 상위노출 보장형 계약서',
-    clip:  '네이버 클립(숏폼) 제작 대행 계약서'
+    clip:  '네이버 클립(숏폼) 제작 대행 계약서',
+    insta: '인스타그램 카드뉴스 제작 대행 계약서'
   };
   function setMode(m){
     MODE=m;
-    ['home','blog','place','clip'].forEach(k=>{
+    ['home','blog','place','clip','insta'].forEach(k=>{
       document.querySelectorAll('.mode-'+k).forEach(el=>el.style.display = m===k ? '' : 'none');
       $(MODE_DOC[k]).style.display = m===k ? '' : 'none';
       $('tab_'+k).classList.toggle('on', m===k);
@@ -1701,6 +1892,83 @@
     $('cls_g_addr').textContent = nb($('g_addr').value);
     if(sp){ $('d_special_clip').textContent = sp; $('special_block_clip').style.display=''; }
     else  { $('special_block_clip').style.display='none'; }
+
+    /* ===== 인스타그램 카드뉴스 ===== */
+    $('ind_b_name').textContent = dash($('b_name').value);
+    $('ind_b_ceo').textContent  = dash($('b_ceo').value);
+    $('ind_b_tel').textContent  = dash($('b_tel').value);
+    $('ind_b_addr').textContent = nb($('b_addr').value);
+    $('ind_g_name').textContent = dash($('g_name').value);
+    $('ind_g_ceo').textContent  = dash($('g_ceo').value);
+    $('ind_g_biz').textContent  = dash($('g_biz').value);
+    $('ind_g_tel').textContent  = dash($('g_tel').value);
+    $('ind_g_addr').textContent = nb($('g_addr').value);
+    $('ind_lead_b').textContent = dash($('b_name').value);
+    $('ind_lead_g').textContent = dash($('g_name').value);
+
+    const instaProd = (document.querySelector('input[name="insta_prod"]:checked')||{}).value || 'a';
+    ['a','b','m','s'].forEach(v=>{
+      const box = $('insta_opt_'+v);
+      if(box){ box.classList.toggle('on', instaProd===v); box.classList.toggle('off', instaProd!==v); }
+    });
+    const IN_A = numOf('inA_amt'), IN_B = numOf('inB_amt');
+    const IN_MB = numOf('inM_blog_amt'), IN_MI = numOf('inM_insta_amt'), IN_S = numOf('inS_amt');
+    const INSTA_TASKS = '<ul class="pkg-items" style="margin:5px 0 2px"><li>맞춤 주제 기획 및 원고 작성</li><li>병원 색상·톤에 맞춘 카드뉴스 디자인 제작 (의료법 검수 포함)</li><li>업로드 대행 — 캡션·해시태그·의료정보 고지문 포함</li><li>노출 부스팅 무료 제공 (게시물 1건 기준 조회수 700~1,000 · 좋아요 50~80 · 댓글 3~5 세팅)</li></ul>';
+    const INSTA_BOOST = '<p class="li">③ 노출 부스팅 수치는 게시물 1건 기준 세팅값이며 노출 결과를 보장하지 아니한다. 댓글은 치료 후기·효과에 대한 표현 없이 일반 반응형으로만 작성한다.</p>';
+    let inScope='', inFee='', inFeeAmt=0;
+    if(instaProd==='a' || instaProd==='b'){
+      const icnt = instaProd==='a' ? '월 10회 (주 2~3회)' : '월 5회 (주 1~2회)';
+      inFeeAmt = instaProd==='a' ? IN_A : IN_B;
+      $('ind_title').textContent = '인스타그램 카드뉴스 제작 대행 계약서';
+      $('ind_tag').textContent   = '인스타그램 카드뉴스 제작·운영 대행 — 단독형 · ' + icnt;
+      inScope = '<div class="pkg-title" style="margin-top:6px">인스타그램 카드뉴스 제작·운영 — ' + icnt + '</div>' + INSTA_TASKS
+        + (instaProd==='b' ? '<div class="pkg-note">※ 월 5회 상품은 최소 계약기간 3개월 (제4조 ②항)</div>' : '');
+      inFee = '<p class="li">① "갑"은 마케팅 대행비로 월 공급가액 일금 ' + koreanWon(inFeeAmt) + '원(' + inFeeAmt.toLocaleString('ko-KR') + '원, VAT 별도)을 지급한다.</p>'
+        + '<p class="li">② 기타 제비용은 "갑"과 "을"의 상호 협의 하에 정하기로 한다.</p>' + INSTA_BOOST;
+      $('ind_min3').style.display = instaProd==='b' ? '' : 'none';
+    } else if(instaProd==='m'){
+      inFeeAmt = IN_MB + IN_MI;
+      $('ind_title').textContent = '온라인 마케팅 대행 계약서';
+      $('ind_tag').textContent   = '브랜드 블로그 + 인스타그램 카드뉴스 결합 관리';
+      inScope =
+        '<div class="pkg-title" style="margin-top:6px">1. 브랜드 블로그 관리 — 월 10건 (주 2~3회)</div>'
+        + '<ul class="pkg-items" style="margin:5px 0 8px"><li>의료법 준수 정보성 원고 기획 및 작성 (임상 증례 포스팅은 별도 협의)</li><li>고화질 이미지 가공·편집 및 네이버 블로그 업로드</li></ul>'
+        + '<div class="pkg-title">2. 인스타그램 카드뉴스 관리 — 월 10회 (주 2~3회)</div>'
+        + '<ul class="pkg-items" style="margin:5px 0 2px"><li>블로그 원고 재활용 카드뉴스 디자인 제작 (별도 기획비 없음 · 의료법 검수 포함)</li><li>업로드 대행 — 캡션·해시태그·의료정보 고지문 포함</li><li>노출 부스팅 무료 제공 (게시물 1건 기준 조회수 700~1,000 · 좋아요 50~80 · 댓글 3~5 세팅)</li></ul>';
+      inFee = '<p class="li">① "갑"은 마케팅 대행비로 월 공급가액 일금 ' + koreanWon(inFeeAmt) + '원(' + inFeeAmt.toLocaleString('ko-KR') + '원, VAT 별도)을 지급한다.</p>'
+        + '<table class="tbl" style="margin:8px 0"><thead><tr><th>구분</th><th style="text-align:right;width:30%">월 공급가액 (VAT 별도)</th></tr></thead><tbody>'
+        + '<tr><td>브랜드 블로그 관리 (월 10건)</td><td class="amt">' + IN_MB.toLocaleString('ko-KR') + '원</td></tr>'
+        + '<tr><td>인스타그램 카드뉴스 관리 (월 10회)</td><td class="amt">' + IN_MI.toLocaleString('ko-KR') + '원</td></tr>'
+        + '<tr class="sum"><td>합계</td><td class="amt">' + inFeeAmt.toLocaleString('ko-KR') + '원 / 월</td></tr>'
+        + '</tbody></table>'
+        + '<p class="li">② 기타 제비용은 "갑"과 "을"의 상호 협의 하에 정하기로 한다.</p>' + INSTA_BOOST;
+      $('ind_min3').style.display = 'none';
+    } else {
+      inFeeAmt = IN_S;
+      $('ind_title').textContent = '인스타그램 시드 트래픽 관리 계약서';
+      $('ind_tag').textContent   = '병원 운영 계정 노출 부스팅 — 월 10회 고정';
+      inScope = '<div class="pkg-title" style="margin-top:6px">인스타그램 시드 트래픽 관리 — 월 10회 고정</div>'
+        + '<ul class="pkg-items" style="margin:5px 0 2px"><li>"갑"이 직접 운영하는 인스타그램 계정의 게시물에 노출 부스팅 적용</li><li>게시물 1건 기준 조회수 700~1,000 · 좋아요 50~80 · 댓글 3~5 세팅</li><li>게시물 저장 50회 · 공유 10회 세팅</li></ul>';
+      inFee = '<p class="li">① "갑"은 마케팅 대행비로 월 공급가액 일금 ' + koreanWon(inFeeAmt) + '원(' + inFeeAmt.toLocaleString('ko-KR') + '원, VAT 별도)을 지급한다.</p>'
+        + '<p class="li">② 기타 제비용은 "갑"과 "을"의 상호 협의 하에 정하기로 한다.</p>' + INSTA_BOOST;
+      $('ind_min3').style.display = 'none';
+    }
+    $('ind_scope').innerHTML = inScope;
+    $('ind_fee_body').innerHTML = inFee;
+    $('ind_start').textContent  = fmtYMD($('in_start').value);
+    $('ind_end').textContent    = fmtYMD($('in_end').value);
+    $('ind_notice').textContent = dash($('in_notice').value);
+    $('ind_renew').textContent  = dash($('in_renew').value);
+    $('ind_date').textContent   = fmtDate();
+    $('ins_b_name').textContent = dash($('b_name').value);
+    $('ins_b_ceo').textContent  = dash($('b_ceo').value);
+    $('ins_b_addr').textContent = nb($('b_addr').value);
+    $('ins_g_name').textContent = dash($('g_name').value);
+    $('ins_g_ceo').textContent  = dash($('g_ceo').value);
+    $('ins_g_biz').textContent  = dash($('g_biz').value);
+    $('ins_g_addr').textContent = nb($('g_addr').value);
+    if(sp){ $('d_special_insta').textContent = sp; $('special_block_insta').style.display=''; }
+    else  { $('special_block_insta').style.display='none'; }
   }
 
   function resetForm(){
@@ -1972,6 +2240,13 @@
     $('cl_end').value = e.toISOString().slice(0,10);
     render();
   });
+  // 인스타 시작일 변경 → 종료일 자동 +6개월 −1일
+  $('in_start').addEventListener('change', ()=>{
+    const v=$('in_start').value; if(!v) return;
+    const e=new Date(v+'T00:00:00'); e.setMonth(e.getMonth()+6); e.setDate(e.getDate()-1);
+    $('in_end').value = e.toISOString().slice(0,10);
+    render();
+  });
 
   // 초기 계약일 = 오늘 (+ 블로그·플레이스 1년, 클립 6개월)
   (function(){
@@ -1981,11 +2256,13 @@
     $('bl_start').value = today;
     $('pl_start').value = today;
     $('cl_start').value = today;
+    $('in_start').value = today;
     const e=new Date(t); e.setFullYear(e.getFullYear()+1); e.setDate(e.getDate()-1);
     $('bl_end').value = e.toISOString().slice(0,10);
     $('pl_end').value = e.toISOString().slice(0,10);
     const e6=new Date(t); e6.setMonth(e6.getMonth()+6); e6.setDate(e6.getDate()-1);
     $('cl_end').value = e6.toISOString().slice(0,10);
+    $('in_end').value = e6.toISOString().slice(0,10);
   })();
   render();
 </script>
