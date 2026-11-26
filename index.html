@@ -488,10 +488,9 @@
       </div>
 
       <div class="opt off" id="insta_opt_m">
-        <div class="top"><input type="radio" name="insta_prod" id="ip_m" value="m" style="width:17px;height:17px;accent-color:var(--accent);cursor:pointer"><label for="ip_m" style="cursor:pointer;flex:1;font-weight:600;font-size:13px">혼합형 · 블로그 월 10건 + 인스타 월 10회</label></div>
-        <div class="amount-row"><span class="nm">브랜드 블로그 관리 (월)</span><span class="won-wrap"><input class="amtnum" id="inM_blog_amt" value="600000"></span></div>
-        <div class="amount-row" style="margin-bottom:0"><span class="nm">인스타그램 관리 (월)</span><span class="won-wrap"><input class="amtnum" id="inM_insta_amt" value="300000"></span></div>
-        <p class="hint" style="text-align:left;margin-top:6px">블로그 원고를 재활용해 인스타 기획비가 빠진 금액입니다 (기본 900,000원/월 · VAT 별도).</p>
+        <div class="top"><input type="radio" name="insta_prod" id="ip_m" value="m" style="width:17px;height:17px;accent-color:var(--accent);cursor:pointer"><label for="ip_m" style="cursor:pointer;flex:1;font-weight:600;font-size:13px">블로그 연계형 · 인스타 월 10회 <span style="color:var(--accent-2);font-size:11px">(블로그 동시 진행 병원)</span></label></div>
+        <div class="amount-row" style="margin-bottom:0"><span class="nm">월 공급가액</span><span class="won-wrap"><input class="amtnum" id="inM_insta_amt" value="300000"></span></div>
+        <p class="hint" style="text-align:left;margin-top:6px">블로그를 함께 진행하는 병원 전용 금액입니다 — 블로그 원고를 재활용해 기획비가 빠진 금액(단독형 450,000원 대비). <b>블로그 계약은 별도 계약서로 작성</b>하며, 이 계약서에는 인스타그램만 담깁니다.</p>
       </div>
 
       <div class="opt off" id="insta_opt_s">
@@ -1646,7 +1645,7 @@
     }
     else if(m==='insta'){
       const ip = (document.querySelector('input[name="insta_prod"]:checked')||{}).value || 'a';
-      base = (ip==='m' ? '한번_블로그·인스타 결합_계약서_' : (ip==='s' ? '한번_인스타 시드트래픽_계약서_' : '한번_인스타그램_계약서_')) + clinic;
+      base = (ip==='m' ? '한번_인스타그램 블로그연계_계약서_' : (ip==='s' ? '한번_인스타 시드트래픽_계약서_' : '한번_인스타그램_계약서_')) + clinic;
     }
     else if(m==='recall'){
       base = '한번_정기검진 콜_계약서_' + clinic;
@@ -2068,7 +2067,7 @@
       if(box){ box.classList.toggle('on', instaProd===v); box.classList.toggle('off', instaProd!==v); }
     });
     const IN_A = numOf('inA_amt'), IN_B = numOf('inB_amt');
-    const IN_MB = numOf('inM_blog_amt'), IN_MI = numOf('inM_insta_amt'), IN_S = numOf('inS_amt');
+    const IN_MI = numOf('inM_insta_amt'), IN_S = numOf('inS_amt');
     const INSTA_TASKS = '<ul class="pkg-items" style="margin:5px 0 2px"><li>맞춤 주제 기획 및 원고 작성</li><li>병원 색상·톤에 맞춘 카드뉴스 디자인 제작 (의료법 검수 포함)</li><li>업로드 대행 — 캡션·해시태그·의료정보 고지문 포함</li><li>노출 부스팅 무료 제공 (게시물 1건 기준 조회수 700~1,000 · 좋아요 50~80 · 댓글 3~5 세팅)</li></ul>';
     const INSTA_BOOST = '<p class="li">③ 노출 부스팅 수치는 게시물 1건 기준 세팅값이며 노출 결과를 보장하지 아니한다. 댓글은 치료 후기·효과에 대한 표현 없이 일반 반응형으로만 작성한다.</p>';
     let inScope='', inFee='', inFeeAmt=0;
@@ -2083,21 +2082,15 @@
         + '<p class="li">② 기타 제비용은 "갑"과 "을"의 상호 협의 하에 정하기로 한다.</p>' + INSTA_BOOST;
       $('ind_min3').style.display = instaProd==='b' ? '' : 'none';
     } else if(instaProd==='m'){
-      inFeeAmt = IN_MB + IN_MI;
-      $('ind_title').textContent = '온라인 마케팅 대행 계약서';
-      $('ind_tag').textContent   = '브랜드 블로그 + 인스타그램 카드뉴스 결합 관리';
-      inScope =
-        '<div class="pkg-title" style="margin-top:6px">1. 브랜드 블로그 관리 — 월 10건 (주 2~3회)</div>'
-        + '<ul class="pkg-items" style="margin:5px 0 8px"><li>의료법 준수 정보성 원고 기획 및 작성 (임상 증례 포스팅은 별도 협의)</li><li>고화질 이미지 가공·편집 및 네이버 블로그 업로드</li></ul>'
-        + '<div class="pkg-title">2. 인스타그램 카드뉴스 관리 — 월 10회 (주 2~3회)</div>'
+      inFeeAmt = IN_MI;
+      $('ind_title').textContent = '인스타그램 카드뉴스 제작 대행 계약서';
+      $('ind_tag').textContent   = '블로그 연계형 · 월 10회 (블로그 원고 재활용)';
+      inScope = '<div class="pkg-title" style="margin-top:6px">인스타그램 카드뉴스 제작·운영 — 월 10회 (주 2~3회)</div>'
         + '<ul class="pkg-items" style="margin:5px 0 2px"><li>블로그 원고 재활용 카드뉴스 디자인 제작 (별도 기획비 없음 · 의료법 검수 포함)</li><li>업로드 대행 — 캡션·해시태그·의료정보 고지문 포함</li><li>노출 부스팅 무료 제공 (게시물 1건 기준 조회수 700~1,000 · 좋아요 50~80 · 댓글 3~5 세팅)</li></ul>';
       inFee = '<p class="li">① "갑"은 마케팅 대행비로 월 공급가액 일금 ' + koreanWon(inFeeAmt) + '원(' + inFeeAmt.toLocaleString('ko-KR') + '원, VAT 별도)을 지급한다.</p>'
-        + '<table class="tbl" style="margin:8px 0"><thead><tr><th>구분</th><th style="text-align:right;width:30%">월 공급가액 (VAT 별도)</th></tr></thead><tbody>'
-        + '<tr><td>브랜드 블로그 관리 (월 10건)</td><td class="amt">' + IN_MB.toLocaleString('ko-KR') + '원</td></tr>'
-        + '<tr><td>인스타그램 카드뉴스 관리 (월 10회)</td><td class="amt">' + IN_MI.toLocaleString('ko-KR') + '원</td></tr>'
-        + '<tr class="sum"><td>합계</td><td class="amt">' + inFeeAmt.toLocaleString('ko-KR') + '원 / 월</td></tr>'
-        + '</tbody></table>'
-        + '<p class="li">② 기타 제비용은 "갑"과 "을"의 상호 협의 하에 정하기로 한다.</p>' + INSTA_BOOST;
+        + '<p class="li">② 제1항의 금액은 "갑"이 "을"과 별도 계약으로 브랜드 블로그 관리를 함께 진행하는 경우에 적용되는 블로그 연계 금액으로, 블로그 원고를 재활용하여 별도 기획비를 제외한 금액이다. (브랜드 블로그 마케팅 대행 계약은 별도 계약서로 체결한다)</p>'
+        + '<p class="li">③ 기타 제비용은 "갑"과 "을"의 상호 협의 하에 정하기로 한다.</p>'
+        + '<p class="li">④ 노출 부스팅 수치는 게시물 1건 기준 세팅값이며 노출 결과를 보장하지 아니한다. 댓글은 치료 후기·효과에 대한 표현 없이 일반 반응형으로만 작성한다.</p>';
       $('ind_min3').style.display = 'none';
     } else {
       inFeeAmt = IN_S;
