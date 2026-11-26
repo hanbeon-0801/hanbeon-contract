@@ -457,10 +457,9 @@
       </div>
 
       <div class="opt off" id="clip_opt_m">
-        <div class="top"><input type="radio" name="clip_prod" id="cp_m" value="m" style="width:17px;height:17px;accent-color:var(--accent);cursor:pointer"><label for="cp_m" style="cursor:pointer;flex:1;font-weight:600;font-size:13px">혼합형 · 블로그 월 10건 + 클립 월 10건</label></div>
-        <div class="amount-row"><span class="nm">브랜드 블로그 관리 (월)</span><span class="won-wrap"><input class="amtnum" id="clM_blog_amt" value="600000"></span></div>
-        <div class="amount-row" style="margin-bottom:0"><span class="nm">네이버 클립 관리 (월)</span><span class="won-wrap"><input class="amtnum" id="clM_clip_amt" value="300000"></span></div>
-        <p class="hint" style="text-align:left;margin-top:6px">합계는 자동 계산됩니다 (기본 900,000원/월 · VAT 별도). 블로그+인스타그램 동시 진행 시 클립 50% 할인 문구는 <b>자동 적용하지 않습니다</b> — 적용 여부는 별도 확인 후 금액을 직접 수정하세요.</p>
+        <div class="top"><input type="radio" name="clip_prod" id="cp_m" value="m" style="width:17px;height:17px;accent-color:var(--accent);cursor:pointer"><label for="cp_m" style="cursor:pointer;flex:1;font-weight:600;font-size:13px">블로그 연계형 · 클립 월 10건 <span style="color:var(--accent-2);font-size:11px">(블로그 동시 진행 병원)</span></label></div>
+        <div class="amount-row" style="margin-bottom:0"><span class="nm">월 공급가액</span><span class="won-wrap"><input class="amtnum" id="clM_clip_amt" value="300000"></span></div>
+        <p class="hint" style="text-align:left;margin-top:6px">블로그를 함께 진행하는 병원 전용 금액입니다 — 블로그 원고를 재활용해 기획비가 빠진 금액(단독형 450,000원 대비). <b>블로그 계약은 별도 계약서로 작성</b>하며, 이 계약서에는 클립만 담깁니다. 할인 적용 여부는 별도 확인 후 금액을 직접 수정하세요.</p>
       </div>
 
       <div class="row2" style="margin-top:12px">
@@ -1641,7 +1640,7 @@
     else if(m==='place') base = '한번_플레이스 상위노출 보장형_계약서_' + clinic;
     else if(m==='clip'){
       const cp = (document.querySelector('input[name="clip_prod"]:checked')||{}).value || 'a';
-      base = (cp==='m' ? '한번_블로그·클립 결합_계약서_' : '한번_네이버클립_계약서_') + clinic;
+      base = (cp==='m' ? '한번_네이버클립 블로그연계_계약서_' : '한번_네이버클립_계약서_') + clinic;
     }
     else if(m==='insta'){
       const ip = (document.querySelector('input[name="insta_prod"]:checked')||{}).value || 'a';
@@ -2000,7 +1999,7 @@
       if(box){ box.classList.toggle('on', clipProd===v); box.classList.toggle('off', clipProd!==v); }
     });
     const AMT_A = numOf('clA_amt'), AMT_B = numOf('clB_amt');
-    const AMT_MB = numOf('clM_blog_amt'), AMT_MC = numOf('clM_clip_amt');
+    const AMT_MC = numOf('clM_clip_amt');
     const CLIP_TASKS = '<ul class="pkg-items" style="margin:5px 0 2px"><li>맞춤 주제 기획 및 슬라이드 원고 작성</li><li>숏폼 카드뉴스 제작 및 업로드 대행</li><li>검색 키워드 맞춤 제목 · 병원 태그 연결</li></ul>';
     let scopeHtml='', feeHtml='', clipFee=0;
     if(clipProd==='a' || clipProd==='b'){
@@ -2014,21 +2013,14 @@
         + '<p class="li">② 기타 제비용은 "갑"과 "을"의 상호 협의 하에 정하기로 한다.</p>';
       $('cld_min3').style.display = clipProd==='b' ? '' : 'none';
     } else {
-      clipFee = AMT_MB + AMT_MC;
-      $('cld_title').textContent = '온라인 마케팅 대행 계약서';
-      $('cld_tag').textContent   = '브랜드 블로그 + 네이버 클립(숏폼) 결합 관리';
-      scopeHtml =
-        '<div class="pkg-title" style="margin-top:6px">1. 브랜드 블로그 관리 — 월 10건 (주 2~3회)</div>'
-        + '<ul class="pkg-items" style="margin:5px 0 8px"><li>의료법 준수 정보성 원고 기획 및 작성 (임상 증례 포스팅은 별도 협의)</li><li>고화질 이미지 가공·편집 및 네이버 블로그 업로드</li></ul>'
-        + '<div class="pkg-title">2. 네이버 클립(숏폼) 관리 — 월 10건 (주 2~3회)</div>'
-        + '<ul class="pkg-items" style="margin:5px 0 2px"><li>카드뉴스 기반 9:16 세로형 모션 슬라이드 영상 제작 (약 15~30초)</li><li>네이버 클립 업로드 및 스마트플레이스 장소 태그 연동</li></ul>';
+      clipFee = AMT_MC;
+      $('cld_title').textContent = '네이버 클립(숏폼) 카드뉴스 제작 대행 계약서';
+      $('cld_tag').textContent   = '블로그 연계형 · 월 10건 (블로그 원고 재활용)';
+      scopeHtml = '<div class="pkg-title" style="margin-top:6px">네이버 클립(숏폼) 카드뉴스 제작 — 월 10건 (주 2~3회)</div>'
+        + '<ul class="pkg-items" style="margin:5px 0 2px"><li>블로그 원고 재활용 슬라이드 원고·카드뉴스 제작 (별도 기획비 없음)</li><li>카드뉴스 기반 9:16 세로형 모션 슬라이드 영상 제작 (약 15~30초)</li><li>네이버 클립 업로드 및 스마트플레이스 장소 태그 연동</li></ul>';
       feeHtml = '<p class="li">① "갑"은 마케팅 대행비로 월 공급가액 일금 ' + koreanWon(clipFee) + '원(' + clipFee.toLocaleString('ko-KR') + '원, VAT 별도)을 지급한다.</p>'
-        + '<table class="tbl" style="margin:8px 0"><thead><tr><th>구분</th><th style="text-align:right;width:30%">월 공급가액 (VAT 별도)</th></tr></thead><tbody>'
-        + '<tr><td>브랜드 블로그 관리 (월 10건)</td><td class="amt">' + AMT_MB.toLocaleString('ko-KR') + '원</td></tr>'
-        + '<tr><td>네이버 클립(숏폼) 관리 (월 10건)</td><td class="amt">' + AMT_MC.toLocaleString('ko-KR') + '원</td></tr>'
-        + '<tr class="sum"><td>합계</td><td class="amt">' + clipFee.toLocaleString('ko-KR') + '원 / 월</td></tr>'
-        + '</tbody></table>'
-        + '<p class="li">② 기타 제비용은 "갑"과 "을"의 상호 협의 하에 정하기로 한다.</p>';
+        + '<p class="li">② 제1항의 금액은 "갑"이 "을"과 별도 계약으로 브랜드 블로그 관리를 함께 진행하는 경우에 적용되는 블로그 연계 금액으로, 블로그 원고를 재활용하여 별도 기획비를 제외한 금액이다. (브랜드 블로그 마케팅 대행 계약은 별도 계약서로 체결한다)</p>'
+        + '<p class="li">③ 기타 제비용은 "갑"과 "을"의 상호 협의 하에 정하기로 한다.</p>';
       $('cld_min3').style.display = 'none';
     }
     $('cld_scope').innerHTML = scopeHtml;
